@@ -1,0 +1,443 @@
+Act as a Senior .NET 8, React.js, SQL Server, JWT Authentication, SonarQube, and Full Stack Architect.
+
+ 
+Project Name:
+
+Loan Application Management System
+
+ 
+Goal:
+
+Review, improve, refactor, and complete my existing Loan Application Management System. Focus ONLY on Phase 1 (Core Loan Management System). Do not implement RAG AI, LangChain, ChromaDB, Ollama, Agentic AI, MCP, or any AI features.
+
+ 
+=================================================
+
+PHASE 1 - CORE LOAN MANAGEMENT SYSTEM
+
+=================================================
+
+ 
+Technology Stack:
+
+ 
+Backend:
+
+- ASP.NET Core 8 Web API
+
+- Entity Framework Core
+
+- SQL Server
+
+- JWT Authentication
+
+- Swagger/OpenAPI
+
+- xUnit Testing
+
+ 
+Frontend:
+
+- React.js
+
+- React Router
+
+- Axios
+
+- Bootstrap or Material UI
+
+ 
+Database:
+
+- SQL Server
+
+ 
+=================================================
+
+ROLES
+
+=================================================
+
+ 
+1. Customer
+
+2. Agent
+
+3. Admin
+
+ 
+=================================================
+
+CUSTOMER FEATURES
+
+=================================================
+
+ 
+- Register Account
+
+- Login
+
+- Apply for Loan
+
+- View Loan Status
+
+- View Loan History
+
+- Upload Documents
+
+- Update Profile
+
+ 
+=================================================
+
+AGENT FEATURES
+
+=================================================
+
+ 
+- Create Loan Application
+
+- Update Loan Application
+
+- Delete Loan Application
+
+- Search Loan Applications
+
+- View Customer Details
+
+- Manage Customer Applications
+
+ 
+=================================================
+
+ADMIN FEATURES
+
+=================================================
+
+ 
+- View All Loan Applications
+
+- Approve Loan
+
+- Reject Loan
+
+- Change Loan Status
+
+- Manage Users
+
+- View Dashboard Metrics
+
+- Audit Loan Activities
+
+ 
+=================================================
+
+LOAN ENTITY
+
+=================================================
+
+ 
+Fields:
+
+ 
+- LoanId
+
+- CustomerName
+
+- MobileNumber
+
+- Email
+
+- LoanType
+
+- LoanAmount
+
+- InterestRate
+
+- TenureMonths
+
+- Address
+
+- Status
+
+- CreatedDate
+
+- UpdatedDate
+
+ 
+=================================================
+
+BACKEND REQUIREMENTS
+
+=================================================
+
+ 
+Generate and improve:
+
+ 
+- Clean Architecture
+
+- Entity Models
+
+- DTOs
+
+- Interfaces
+
+- Repository Pattern
+
+- Services
+
+- Controllers
+
+- Middleware
+
+- Global Exception Handling
+
+- Validation
+
+- Logging
+
+- JWT Authentication
+
+- Role Based Authorization
+
+- Swagger Configuration
+
+ 
+Create APIs for:
+
+ 
+- Authentication
+
+- Customer Management
+
+- Loan Management
+
+- Agent Operations
+
+- Admin Operations
+
+- Dashboard Metrics
+
+- Document Upload
+
+ 
+=================================================
+
+FRONTEND REQUIREMENTS
+
+=================================================
+
+ 
+Create and improve:
+
+ 
+Pages:
+
+ 
+- Login
+
+- Register
+
+- Dashboard
+
+- Apply Loan
+
+- Loan List
+
+- Loan Details
+
+- Customer Dashboard
+
+- Agent Dashboard
+
+- Admin Dashboard
+
+- Profile Management
+
+ 
+Requirements:
+
+ 
+- Responsive UI
+
+- API Integration
+
+- Form Validation
+
+- Error Handling
+
+- Loading Indicators
+
+- Toast Notifications
+
+- Protected Routes
+
+- Role Based Navigation
+
+- Professional UI Design
+
+ 
+=================================================
+
+DATABASE REQUIREMENTS
+
+=================================================
+
+ 
+Review database design and improve:
+
+ 
+- Users Table
+
+- Roles Table
+
+- Loans Table
+
+- Documents Table
+
+- Audit Logs Table
+
+ 
+Generate:
+
+- EF Core Migrations
+
+- Relationships
+
+- Constraints
+
+- Seed Data
+
+ 
+=================================================
+
+TESTING REQUIREMENTS
+
+=================================================
+
+ 
+Generate and improve:
+
+ 
+- xUnit Unit Tests
+
+- Service Tests
+
+- Controller Tests
+
+- Integration Tests
+
+ 
+Target:
+
+ 
+- Coverage > 90%
+
+- All Tests Passing
+
+ 
+=================================================
+
+SONARQUBE REQUIREMENTS
+
+=================================================
+
+ 
+Use Local SonarQube:
+
+ 
+http://localhost:9001
+
+ 
+Important:
+
+ 
+- Do NOT use port 9000
+
+- Port 9000 is blocked in my environment
+
+- Always use localhost:9001
+
+ 
+Review and fix:
+
+ 
+- Bugs
+
+- Vulnerabilities
+
+- Code Smells
+
+- Duplicated Code
+
+- Maintainability Issues
+
+ 
+Target:
+
+ 
+- Coverage > 90%
+
+- Quality Gate Passed
+
+- Reliability Rating A
+
+- Security Rating A
+
+- Maintainability Rating A
+
+ 
+Generate all required SonarScanner commands for:
+
+ 
+1. Begin Analysis
+
+2. Build
+
+3. Test
+
+4. End Analysis
+
+ 
+=================================================
+
+DELIVERABLES
+
+=================================================
+
+ 
+Review my entire existing project and provide:
+
+ 
+1. Architecture Improvements
+
+2. Folder Structure Improvements
+
+3. Database Improvements
+
+4. Backend Improvements
+
+5. Frontend Improvements
+
+6. Security Improvements
+
+7. API Improvements
+
+8. Code Quality Improvements
+
+9. SonarQube Fixes
+
+10. Unit Test Improvements
+
+11. Missing Features
+
+12. Production Readiness Checklist
+
+ 
+Ensure the application is production-ready, secure, scalable, maintainable, and fully compatible with SonarQube running on:
+
+ 
+http://localhost:9001
+ 
+ 
