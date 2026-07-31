@@ -1,0 +1,27 @@
+# Python & Pytest
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+*.db
+*.sqlite3
+
+# Virtual Environments
+venv/
+ENV/
+env/
+.venv/
+
+# Node & Frontend
+node_modules/
+dist/
+.vite/
+npm-debug.log*
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

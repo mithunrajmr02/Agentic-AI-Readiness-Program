@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testsuite name="pytest" errors="0" failures="0" skipped="0" tests="20" time="0.330" timestamp="2026-07-31T11:28:55" hostname="LOCAL">
+		<testcase classname="tests.test_api" name="test_create_product" time="0.045" />
+		<testcase classname="tests.test_api" name="test_stock_update_alert" time="0.038" />
+		<testcase classname="tests.test_api" name="test_create_po" time="0.025" />
+		<testcase classname="tests.test_api" name="test_receive_po_updates_stock" time="0.041" />
+		<testcase classname="tests.test_api" name="test_low_alerts" time="0.015" />
+		<testcase classname="tests.test_api" name="test_supplier_catalog" time="0.018" />
+		<testcase classname="tests.test_api" name="test_filter_by_category" time="0.022" />
+		<testcase classname="tests.test_api" name="test_dashboard" time="0.014" />
+		<testcase classname="tests.test_db" name="test_sku_unique" time="0.008" />
+		<testcase classname="tests.test_db" name="test_movement_linked" time="0.007" />
+		<testcase classname="tests.test_db" name="test_po_unique" time="0.009" />
+		<testcase classname="tests.test_db" name="test_stock_level_one_to_one" time="0.007" />
+		<testcase classname="tests.test_unit" name="test_sku_format" time="0.001" />
+		<testcase classname="tests.test_unit" name="test_sku_categories" time="0.001" />
+		<testcase classname="tests.test_unit" name="test_po_number" time="0.001" />
+		<testcase classname="tests.test_unit" name="test_low_stock_alert" time="0.001" />
+		<testcase classname="tests.test_unit" name="test_out_of_stock_alert" time="0.001" />
+		<testcase classname="tests.test_unit" name="test_no_alert_above_reorder" time="0.001" />
+		<testcase classname="tests.test_unit" name="test_stock_value" time="0.001" />
+		<testcase classname="tests.test_unit" name="test_quantity_available" time="0.001" />
+	</testsuite>
+</testsuites>
