@@ -88,3 +88,87 @@ def test_dashboard(client, auth_headers):
     for field in ["total_products", "low_stock_count", "out_of_stock_count",
                   "open_po_count", "total_stock_value"]:
         assert field in data
+
+def test_get_product_not_found(client, auth_headers):
+    response = client.get("/api/v1/products/99999", headers=auth_headers)
+    assert response.status_code == 404
+    assert "not found" in response.json()["detail"]
+
+def test_update_stock_not_found(client, auth_headers):
+    payload = {"movement_type": "receipt", "quantity": 10}
+    response = client.patch("/api/v1/products/99999/stock", json=payload, headers=auth_headers)
+    assert response.status_code == 404
+
+def test_supplier_catalog_not_found(client, auth_headers):
+    response = client.get("/api/v1/suppliers/99999/catalog", headers=auth_headers)
+    assert response.status_code == 404
+
+def test_create_po_invalid_supplier(client, auth_headers, seeded_product):
+    payload = {
+        "supplier_id": 99999,
+        "order_date": "2026-06-18",
+        "items": [{"product_id": seeded_product["id"], "quantity_ordered": 10, "unit_cost": 100.0}]
+    }
+    response = client.post("/api/v1/orders", json=payload, headers=auth_headers)
+    assert response.status_code == 400
+
+def test_get_order_by_id_and_not_found(client, auth_headers, submitted_po):
+    res1 = client.get(f"/api/v1/orders/{submitted_po}", headers=auth_headers)
+    assert res1.status_code == 200
+    assert res1.json()["id"] == submitted_po
+
+    res2 = client.get("/api/v1/orders/99999", headers=auth_headers)
+    assert res2.status_code == 404
+
+def test_receive_po_duplicate_error(client, auth_headers, submitted_po):
+    # First receive succeeds
+    res1 = client.patch(f"/api/v1/orders/{submitted_po}/receive", headers=auth_headers)
+    assert res1.status_code == 200
+
+    # Second receive fails with 400
+    res2 = client.patch(f"/api/v1/orders/{submitted_po}/receive", headers=auth_headers)
+    assert res2.status_code == 400
+    assert "already been received" in res2.json()["detail"]
+
+def test_receive_po_not_found(client, auth_headers):
+    response = client.patch("/api/v1/orders/99999/receive", headers=auth_headers)
+    assert response.status_code == 404
+
+def test_create_supplier_duplicate_code(client, auth_headers, seeded_supplier):
+    payload = {
+        "name": "Duplicate Wholesale Ltd",
+        "supplier_code": seeded_supplier["supplier_code"],
+        "contact_email": "dup@supplier.com"
+    }
+    response = client.post("/api/v1/suppliers", json=payload, headers=auth_headers)
+    assert response.status_code == 400
+    assert "already exists" in response.json()["detail"]
+
+def test_health_and_root_endpoints(client):
+    res_health = client.get("/health")
+    assert res_health.status_code == 200
+    assert res_health.json()["status"] == "ok"
+
+    res_root = client.get("/")
+    assert res_root.status_code == 200
+    assert "Welcome" in res_root.json()["message"]
+
+def test_filter_products_by_low_stock(client, auth_headers, seeded_product):
+    # Make stock low
+    client.patch(
+        f"/api/v1/products/{seeded_product['id']}/stock",
+        json={"movement_type": "sale", "quantity": -100},
+        headers=auth_headers
+    )
+    res = client.get("/api/v1/products?low_stock=true", headers=auth_headers)
+    assert res.status_code == 200
+    assert len(res.json()) >= 1
+
+def test_list_orders_filter_status_and_supplier(client, auth_headers, submitted_po, seeded_supplier):
+    res = client.get(
+        f"/api/v1/orders?status=draft&supplier_id={seeded_supplier['id']}",
+        headers=auth_headers
+    )
+    assert res.status_code == 200
+    assert len(res.json()) >= 1
+

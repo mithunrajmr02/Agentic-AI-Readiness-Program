@@ -1,14 +1,16 @@
 from datetime import date, datetime
 from typing import List, Optional
-from pydantic import BaseModel, EmailStr, ConfigDict
+from pydantic import BaseModel, EmailStr, ConfigDict, Field
 from app.models import Category, MovementType, POStatus
+
 
 # Auth Schemas
 class UserCreate(BaseModel):
     email: EmailStr
-    password: str
+    password: str = Field(min_length=6, description="User password must be at least 6 characters")
     full_name: Optional[str] = None
     role: Optional[str] = "staff"
+
 
 class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -18,9 +20,11 @@ class UserResponse(BaseModel):
     role: str
     is_active: bool
 
+
 class Token(BaseModel):
     access_token: str
     token_type: str
+
 
 # StockLevel Schemas
 class StockLevelResponse(BaseModel):
@@ -32,12 +36,14 @@ class StockLevelResponse(BaseModel):
     quantity_available: int
     last_updated: Optional[datetime]
 
+
 # StockMovement Schemas
 class StockMovementCreate(BaseModel):
     movement_type: MovementType
-    quantity: int
+    quantity: int = Field(description="Movement quantity cannot be zero")
     reference_number: Optional[str] = None
     notes: Optional[str] = None
+
 
 class StockMovementResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -50,13 +56,15 @@ class StockMovementResponse(BaseModel):
     recorded_at: Optional[datetime]
     recorded_by: str
 
+
 # Supplier Schemas
 class SupplierCreate(BaseModel):
-    name: str
-    supplier_code: str
-    contact_email: Optional[str] = None
-    payment_terms_days: Optional[int] = 30
-    lead_time_days: Optional[int] = 7
+    name: str = Field(min_length=1, max_length=200)
+    supplier_code: str = Field(min_length=1, max_length=20)
+    contact_email: Optional[EmailStr] = None
+    payment_terms_days: Optional[int] = Field(default=30, ge=0)
+    lead_time_days: Optional[int] = Field(default=7, ge=0)
+
 
 class SupplierResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -68,16 +76,18 @@ class SupplierResponse(BaseModel):
     lead_time_days: int
     is_active: bool
 
+
 # Product Schemas
 class ProductCreate(BaseModel):
-    name: str
+    name: str = Field(min_length=1, max_length=200)
     category: Category
-    unit_price: float
-    cost_price: float
+    unit_price: float = Field(ge=0, description="Unit price must be non-negative")
+    cost_price: float = Field(ge=0, description="Cost price must be non-negative")
     unit_of_measure: Optional[str] = "pieces"
-    reorder_point: Optional[int] = 10
-    reorder_quantity: Optional[int] = 50
+    reorder_point: Optional[int] = Field(default=10, ge=0)
+    reorder_quantity: Optional[int] = Field(default=50, gt=0)
     supplier_id: Optional[int] = None
+
 
 class ProductResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -95,11 +105,13 @@ class ProductResponse(BaseModel):
     stock_level: Optional[StockLevelResponse] = None
     movements: Optional[List[StockMovementResponse]] = []
 
+
 # PO Item Schemas
 class POItemCreate(BaseModel):
-    product_id: int
-    quantity_ordered: int
-    unit_cost: float
+    product_id: int = Field(gt=0)
+    quantity_ordered: int = Field(gt=0, description="Quantity ordered must be greater than zero")
+    unit_cost: float = Field(ge=0, description="Unit cost must be non-negative")
+
 
 class POItemResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -110,12 +122,14 @@ class POItemResponse(BaseModel):
     unit_cost: float
     quantity_received: Optional[int]
 
+
 # Purchase Order Schemas
 class PurchaseOrderCreate(BaseModel):
-    supplier_id: int
+    supplier_id: int = Field(gt=0)
     order_date: date
     expected_delivery: Optional[date] = None
-    items: List[POItemCreate]
+    items: List[POItemCreate] = Field(min_length=1, description="Purchase order must contain at least one item")
+
 
 class PurchaseOrderResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -130,6 +144,7 @@ class PurchaseOrderResponse(BaseModel):
     created_at: Optional[datetime]
     items: List[POItemResponse] = []
 
+
 # Stock Alert Schemas
 class StockAlertResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -141,6 +156,7 @@ class StockAlertResponse(BaseModel):
     triggered_at: Optional[datetime]
     product: Optional[ProductResponse] = None
 
+
 # Dashboard Schemas
 class DashboardResponse(BaseModel):
     total_products: int
@@ -148,3 +164,4 @@ class DashboardResponse(BaseModel):
     out_of_stock_count: int
     open_po_count: int
     total_stock_value: float
+

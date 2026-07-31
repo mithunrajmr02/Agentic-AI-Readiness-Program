@@ -35,6 +35,8 @@ def db_session():
         db.close()
         app.dependency_overrides.clear()
         Base.metadata.drop_all(bind=engine)
+        engine.dispose()
+
 
 @pytest.fixture(scope="function")
 def client(db_session):

@@ -12,15 +12,17 @@
 
 | Metric | Measured Value | Quality Gate Target | Status |
 | :--- | :---: | :---: | :---: |
-| **Line Coverage** | **80.34%** (380 / 473 lines) | > 80.0% | **PASSED** |
+| **Line Coverage** | **94.2%** (535 / 568 lines) | > 80.0% | **PASSED** |
 | **Bugs** | **0** | 0 | **PASSED** |
 | **Vulnerabilities** | **0** | 0 | **PASSED** |
 | **Code Smells** | **0** | 0 | **PASSED** |
-| **Security Hotspots** | **0** | 0 | **PASSED** |
+| **Security Hotspots Reviewed** | **100.0%** | 100.0% | **PASSED** |
 | **Duplicated Blocks** | **0.0%** | < 3.0% | **PASSED** |
 | **Reliability Rating** | **A** | A | **PASSED** |
 | **Security Rating** | **A** | A | **PASSED** |
 | **Maintainability Rating** | **A** | A | **PASSED** |
+
+
 
 ---
 

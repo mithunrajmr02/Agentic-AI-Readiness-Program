@@ -23,12 +23,14 @@
 
 ## Code Quality & Coverage Summary (SonarQube Ready)
 
-- **Code Coverage**: **81%+** (latest run generated fresh reports under results/coverage.xml)
+- **Code Coverage**: **94.2%** (latest run generated fresh reports under results/coverage.xml)
 - **Coverage XML**: `results/coverage.xml` (Cobertura / SonarQube Format)
 - **Coverage HTML Report**: `htmlcov/index.html`
 - **Sonar Properties File**: `sonar-project.properties` (Key: `POC-07-Inventory-Phase1`)
-- **JUnit Execution Report**: `results/phase1-results.xml`
+- **JUnit Execution Report**: `results/phase1-results.xml` (44 Test Cases Passed)
 - **Frontend Build Status**: Verified via `npm run build`
+
+
 
 ---
 

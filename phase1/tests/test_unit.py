@@ -91,3 +91,55 @@ def test_quantity_available():
     stock.quantity_on_hand = 100
     stock.quantity_reserved = 30
     assert stock.quantity_available == 70
+
+def test_check_stock_alerts_none_params():
+    mock_db = MagicMock()
+    check_stock_alerts(None, None, mock_db)
+    mock_db.query.assert_not_called()
+
+def test_check_stock_alerts_resolves_old_alerts():
+    mock_product = MagicMock()
+    mock_product.id = 1
+    mock_product.sku = "SKU-HHD-0001"
+    mock_product.reorder_point = 10
+
+    mock_stock = MagicMock()
+    mock_stock.quantity_available = 25  # Healthy stock
+
+    old_alert = MagicMock()
+    old_alert.is_resolved = False
+
+    mock_db = MagicMock()
+    mock_db.query.return_value.filter.return_value.all.return_value = [old_alert]
+
+    check_stock_alerts(mock_product, mock_stock, mock_db)
+    assert old_alert.is_resolved is True
+    mock_db.add.assert_not_called()
+
+def test_receive_cancelled_po_raises_error():
+    from app.services.inventory_service import receive_purchase_order
+    from app.models import POStatus
+
+    mock_po = MagicMock()
+    mock_po.status = POStatus.cancelled
+    mock_po.po_number = "PO-2026-999"
+
+    mock_db = MagicMock()
+    mock_db.query.return_value.filter.return_value.first.return_value = mock_po
+
+    with pytest.raises(ValueError) as exc_info:
+        receive_purchase_order(1, mock_db)
+    assert "cancelled" in str(exc_info.value)
+
+
+def test_get_db_generator():
+    from app.database import get_db
+    gen = get_db()
+    db = next(gen)
+    assert db is not None
+    try:
+        next(gen)
+    except StopIteration:
+        pass
+
+

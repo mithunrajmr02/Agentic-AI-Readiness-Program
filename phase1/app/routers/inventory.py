@@ -30,7 +30,7 @@ def create_product(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    sku = generate_sku(product_in.category.value if isinstance(product_in.category, Category) else product_in.category, db)
+    sku = generate_sku(product_in.category.value if isinstance(product_in.category, Category) else str(product_in.category), db)
 
     product = Product(
         sku=sku,
@@ -149,10 +149,14 @@ def create_supplier(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    existing = db.query(Supplier).filter(Supplier.supplier_code == supplier_in.supplier_code).first()
+    if existing:
+        raise HTTPException(status_code=400, detail=f"Supplier code {supplier_in.supplier_code} already exists")
+
     supplier = Supplier(
         name=supplier_in.name,
         supplier_code=supplier_in.supplier_code,
-        contact_email=supplier_in.contact_email,
+        contact_email=str(supplier_in.contact_email) if supplier_in.contact_email else None,
         payment_terms_days=supplier_in.payment_terms_days or 30,
         lead_time_days=supplier_in.lead_time_days or 7,
         is_active=True
@@ -247,7 +251,9 @@ def receive_order(order_id: int, db: Session = Depends(get_db), current_user: Us
         po = receive_purchase_order(order_id, db)
         return po
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        detail_msg = str(e)
+        status_code = 404 if "not found" in detail_msg.lower() else 400
+        raise HTTPException(status_code=status_code, detail=detail_msg)
 
 # --- Dashboard ---
 
@@ -256,3 +262,4 @@ def get_dashboard(db: Session = Depends(get_db), current_user: User = Depends(ge
     data = get_dashboard_data(db)
     logger.info("dashboard_viewed", poc_id="POC-07", phase="P1", total_products=data["total_products"])
     return data
+

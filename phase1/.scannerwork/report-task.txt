@@ -1,0 +1,6 @@
+projectKey=POC-07-Inventory-Phase1
+serverUrl=http://localhost:9001
+serverVersion=9.9.8.100196
+dashboardUrl=http://localhost:9001/dashboard?id=POC-07-Inventory-Phase1
+ceTaskId=AZ-4GYECdk_LIto13P8R
+ceTaskUrl=http://localhost:9001/api/ce/task?id=AZ-4GYECdk_LIto13P8R

@@ -1,12 +1,15 @@
 import os
 import time
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+import structlog
+
 from app.database import engine, Base, SessionLocal
 from app.logging_config import configure_logging
 from app.routers import auth, inventory
-import structlog
 
 configure_logging()
 logger = structlog.get_logger()
@@ -19,9 +22,30 @@ def seed_default_suppliers():
 
         if db.query(Supplier).count() == 0:
             default_suppliers = [
-                Supplier(name="Reliable Wholesale Ltd", supplier_code="SUP-0001", contact_email="orders@reliablewholesale.com", payment_terms_days=30, lead_time_days=7, is_active=True),
-                Supplier(name="Apex Logistics & Supplies", supplier_code="SUP-0002", contact_email="contact@apexlogistics.com", payment_terms_days=15, lead_time_days=3, is_active=True),
-                Supplier(name="Metro Goods Distribution", supplier_code="SUP-0003", contact_email="sales@metrogoods.com", payment_terms_days=45, lead_time_days=10, is_active=True),
+                Supplier(
+                    name="Reliable Wholesale Ltd",
+                    supplier_code="SUP-0001",
+                    contact_email="orders@reliablewholesale.com",
+                    payment_terms_days=30,
+                    lead_time_days=7,
+                    is_active=True,
+                ),
+                Supplier(
+                    name="Apex Logistics & Supplies",
+                    supplier_code="SUP-0002",
+                    contact_email="contact@apexlogistics.com",
+                    payment_terms_days=15,
+                    lead_time_days=3,
+                    is_active=True,
+                ),
+                Supplier(
+                    name="Metro Goods Distribution",
+                    supplier_code="SUP-0003",
+                    contact_email="sales@metrogoods.com",
+                    payment_terms_days=45,
+                    lead_time_days=10,
+                    is_active=True,
+                ),
             ]
             db.add_all(default_suppliers)
             db.commit()
@@ -33,8 +57,12 @@ def seed_default_suppliers():
         db.close()
 
 
-Base.metadata.create_all(bind=engine)
-seed_default_suppliers()
+@asynccontextmanager
+async def lifespan(app_instance: FastAPI):
+    Base.metadata.create_all(bind=engine)
+    seed_default_suppliers()
+    yield
+
 
 app = FastAPI(
     title="POC-07: Inventory Management & Procurement System",
@@ -43,11 +71,19 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
+    lifespan=lifespan,
 )
+
+default_host = os.getenv("HOST_NAME", "localhost")
+default_port = os.getenv("PORT_NUMBER", "5173")
+default_origin = f"http://{default_host}:{default_port}"
+allowed_origins_str = os.getenv("ALLOWED_ORIGINS", default_origin)
+allowed_origins = [origin.strip() for origin in allowed_origins_str.split(",") if origin.strip()]
+
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(","),
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -119,3 +155,4 @@ def root():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app.main:app", host="127.0.0.1", port=8000, reload=True)
+

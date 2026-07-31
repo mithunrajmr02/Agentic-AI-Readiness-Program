@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  sonarqube:
+    image: sonarqube:lts-community
+    container_name: sonarqube
+    ports:
+      - "9001:9000"
+    environment:
+      - SONAR_FORCEAUTHENTICATION=false
+    restart: unless-stopped
+
+  sonar-scanner:
+    image: sonarsource/sonar-scanner-cli:latest
+    container_name: sonar-scanner
+    volumes:
+      - .:/usr/src
+    environment:
+      - SONAR_HOST_URL=http://host.docker.internal:9001
+      - SONAR_LOGIN=squ_b1f02984f5e3a766a010933fa3dddf6b4860d3c7
+    profiles:
+      - scanner

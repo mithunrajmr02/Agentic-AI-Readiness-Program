@@ -1,5 +1,8 @@
 from datetime import date
+from typing import Dict, Any, Optional
 from sqlalchemy.orm import Session
+from sqlalchemy import func
+
 from app.models import (
     Product, StockLevel, StockMovement, PurchaseOrder, POItem,
     StockAlert, MovementType, POStatus, CATEGORY_PREFIXES
@@ -23,11 +26,24 @@ def generate_po_number(db: Session) -> str:
     return f"PO-{year}-{count + 1:04d}"
 
 
-def check_stock_alerts(product: Product, stock: StockLevel, db: Session):
+def check_stock_alerts(product: Product, stock: StockLevel, db: Session) -> None:
     if not product or not stock:
         return
 
     available = stock.quantity_available
+    reorder_point = product.reorder_point or 0
+
+    if available > reorder_point:
+        # Resolve existing alerts if stock level is healthy
+        existing_alerts = db.query(StockAlert).filter(
+            StockAlert.product_id == product.id,
+            StockAlert.is_resolved == False
+        ).all()
+        for alert in existing_alerts:
+            alert.is_resolved = True
+        return
+
+    # Check existing active alert type
     existing_alerts = db.query(StockAlert).filter(
         StockAlert.product_id == product.id,
         StockAlert.is_resolved == False
@@ -50,11 +66,11 @@ def check_stock_alerts(product: Product, stock: StockLevel, db: Session):
             product_sku=product.sku,
             quantity_available=available,
         )
-    elif available <= (product.reorder_point or 0):
+    elif available <= reorder_point:
         alert = StockAlert(
             product_id=product.id,
             alert_type="low_stock",
-            message=f"SKU {product.sku}: only {available} units left (reorder point: {product.reorder_point})."
+            message=f"SKU {product.sku}: only {available} units left (reorder point: {reorder_point})."
         )
         db.add(alert)
         logger.info(
@@ -63,7 +79,7 @@ def check_stock_alerts(product: Product, stock: StockLevel, db: Session):
             phase="P1",
             product_sku=product.sku,
             quantity_available=available,
-            reorder_point=product.reorder_point,
+            reorder_point=reorder_point,
         )
 
 
@@ -71,6 +87,12 @@ def receive_purchase_order(po_id: int, db: Session) -> PurchaseOrder:
     po = db.query(PurchaseOrder).filter(PurchaseOrder.id == po_id).first()
     if not po:
         raise ValueError(f"Purchase order {po_id} not found")
+
+    if po.status == POStatus.received:
+        raise ValueError(f"Purchase order {po.po_number} has already been received")
+
+    if po.status == POStatus.cancelled:
+        raise ValueError(f"Cannot receive cancelled purchase order {po.po_number}")
 
     po.status = POStatus.received
     po.received_date = date.today()
@@ -107,7 +129,7 @@ def receive_purchase_order(po_id: int, db: Session) -> PurchaseOrder:
     return po
 
 
-def get_dashboard_data(db: Session) -> dict:
+def get_dashboard_data(db: Session) -> Dict[str, Any]:
     products = db.query(Product).all()
     total_products = len(products)
 
@@ -135,5 +157,6 @@ def get_dashboard_data(db: Session) -> dict:
         "low_stock_count": low_stock_count,
         "out_of_stock_count": out_of_stock_count,
         "open_po_count": open_po_count,
-        "total_stock_value": total_stock_value,
+        "total_stock_value": round(total_stock_value, 2),
     }
+
