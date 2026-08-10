@@ -1,4 +1,12 @@
+import sys
+import os
 import pytest
+
+# Ensure phase1 directory is in sys.path
+phase1_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if phase1_dir not in sys.path:
+    sys.path.insert(0, phase1_dir)
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -7,6 +15,7 @@ from fastapi.testclient import TestClient
 from app.database import Base, get_db
 from app.main import app
 from app.models import Supplier, Product, StockLevel, Category
+
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 

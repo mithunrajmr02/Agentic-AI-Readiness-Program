@@ -25,3 +25,8 @@ npm-debug.log*
 .idea/
 .DS_Store
 Thumbs.db
+
+# Scanner & Temporary Files
+.scannerwork/
+test_output.txt
+
