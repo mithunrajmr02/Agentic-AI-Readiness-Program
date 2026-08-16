@@ -132,3 +132,16 @@ c:\Users\2mrmi\OneDrive\Documents\github-clone\Agentic-AI-Readiness-Program\
   1. Prepare `rag/inventory_manual.md` with 15 sections covering inventory rules, SKU prefixes, PO lifecycles, and troubleshooting.
   2. Build RAG pipeline with ChromaDB vector store and Gemini 2.0 Flash LLM (`models/text-embedding-004` & `gemini-2.0-flash`).
   3. Streamlit Q&A interface and LangSmith tracing project `AI-Readiness-POC-07-P2`.
+
+
+### ?? Phase 2 & 3: RAG Implementation & LangChain ReAct Agent
+- **Phase 2 (Real RAG)**: Replaced mock embeddings with `GoogleGenerativeAIEmbeddings` (gemini-embedding-2) and refactored the pipeline to use the real `gemini-flash-latest` LLM. The ChromaDB vector store was completely rebuilt to accommodate the new 3072-dimensional vectors.
+- **Phase 3 (ReAct Agent)**: Implemented a robust agentic workflow using LangChain's `AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION`.
+- **Custom Tools Created**: 
+  1. `get_product_stock`
+  2. `get_low_stock_alerts` (Includes summarizer to avoid context window explosion)
+  3. `create_purchase_order`
+  4. `get_supplier_info`
+  5. `rag_knowledge_base`
+- **Testing Note**: ReAct tests pass locally but might hit Google API 429 RESOURCE_EXHAUSTED in bulk testing since the free tier is restricted to 15 generative requests per minute.
+- **Status**: Complete & Verified.
