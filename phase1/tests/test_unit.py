@@ -1,8 +1,8 @@
 import pytest
 from unittest.mock import MagicMock
 from datetime import date
-from app.services.inventory_service import generate_sku, generate_po_number, check_stock_alerts
-from app.models import StockLevel
+from src.backend.services.inventory_service import generate_sku, generate_po_number, check_stock_alerts
+from src.backend.models import StockLevel
 
 def test_sku_format():
     """TC-07-P1-UNIT-01: SKU Format Generation"""

@@ -1,22 +1,37 @@
-# Python & Pytest
+# Environment Variables
+.env
+.env.*
+**/.env
+
+# Python Bytecode & Caches
 __pycache__/
+**/__pycache__/
 *.py[cod]
 *$py.class
 .pytest_cache/
+**/.pytest_cache/
 .coverage
 htmlcov/
+
+# Vector Stores & Databases
+chroma_db/
+**/chroma_db/
 *.db
+*.sqlite
 *.sqlite3
 
 # Virtual Environments
 venv/
+**/venv/
 ENV/
 env/
 .venv/
 
 # Node & Frontend
 node_modules/
+**/node_modules/
 dist/
+**/dist/
 .vite/
 npm-debug.log*
 
@@ -28,5 +43,6 @@ Thumbs.db
 
 # Scanner & Temporary Files
 .scannerwork/
+**/.scannerwork/
 test_output.txt
-
+Login.txt

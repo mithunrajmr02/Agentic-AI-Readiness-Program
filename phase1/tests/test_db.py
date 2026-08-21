@@ -1,7 +1,7 @@
 import pytest
 from datetime import date
 from sqlalchemy.exc import IntegrityError
-from app.models import Product, StockMovement, PurchaseOrder, StockLevel, Category
+from src.backend.models import Product, StockMovement, PurchaseOrder, StockLevel, Category
 
 def test_sku_unique(db_session):
     """TC-07-P1-DB-01: SKU Unique Constraint"""

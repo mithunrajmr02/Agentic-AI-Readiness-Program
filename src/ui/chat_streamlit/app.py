@@ -1,16 +1,13 @@
 import os
 import sys
 
-# Ensure repository root and phase2 directory are on sys.path
-repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-phase2_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+# Ensure repository root is on sys.path
+repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 if repo_root not in sys.path:
     sys.path.insert(0, repo_root)
-if phase2_dir not in sys.path:
-    sys.path.insert(0, phase2_dir)
 
 import streamlit as st
-from phase2.rag.rag_chain import build_rag_chain, ask_question
+from src.rag.rag_chain import build_rag_chain, ask_question
 
 # Page Configuration
 st.set_page_config(
@@ -34,7 +31,12 @@ with st.sidebar:
     st.markdown("- **Retrieval Top-K:** 4 Document Chunks")
     st.markdown("---")
     if st.button("Clear Chat History", use_container_width=True):
-        st.session_state["messages"] = []
+        st.session_state["messages"] = [
+            {
+                "role": "assistant",
+                "content": "Hello! I am your POC-07 Inventory Operations Assistant. Ask me any question about the inventory operations manual!"
+            }
+        ]
         st.rerun()
 
 st.title("📦 Inventory Management & Operations RAG Assistant")

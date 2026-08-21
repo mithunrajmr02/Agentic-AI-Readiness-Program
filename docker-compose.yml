@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  # FastAPI Backend API Service
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: retail_inventory_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:///./inventory.db
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+    volumes:
+      - .:/app
+    command: uvicorn src.backend.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Streamlit Conversational AI & RAG Interface
+  streamlit-ui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: retail_inventory_streamlit
+    ports:
+      - "8501:8501"
+    environment:
+      - BACKEND_API_URL=http://backend:8000
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+    volumes:
+      - .:/app
+    command: streamlit run src/ui/chat_streamlit/app.py --server.port 8501 --server.address 0.0.0.0
+    depends_on:
+      - backend
+
+  # SonarQube Code Quality & Security Scanner
+  sonarqube:
+    image: sonarqube:lts-community
+    container_name: sonarqube
+    ports:
+      - "9001:9000"
+    environment:
+      - SONAR_FORCEAUTHENTICATION=false
+    restart: unless-stopped
+
+  sonar-scanner:
+    image: sonarsource/sonar-scanner-cli:latest
+    container_name: sonar-scanner
+    volumes:
+      - .:/usr/src
+    environment:
+      - SONAR_HOST_URL=http://host.docker.internal:9001
+      - SONAR_LOGIN=${SONAR_LOGIN:-squ_b1f02984f5e3a766a010933fa3dddf6b4860d3c7}
+    profiles:
+      - scanner

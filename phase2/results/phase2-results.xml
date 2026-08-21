@@ -1,1 +1,1503 @@
-<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="33" time="5.598" timestamp="2026-08-10T14:43:44.201456+05:30" hostname="MithunRaj"><testcase classname="phase2.tests.test_phase2" name="test_manual_loads" time="0.005" /><testcase classname="phase2.tests.test_phase2" name="test_chunks_size" time="0.002" /><testcase classname="phase2.tests.test_phase2" name="test_min_chunks" time="0.003" /><testcase classname="phase2.tests.test_phase2" name="test_chromadb_collection" time="1.225" /><testcase classname="phase2.tests.test_phase2" name="test_sku_query" time="0.126" /><testcase classname="phase2.tests.test_phase2" name="test_top_k" time="0.011" /><testcase classname="phase2.tests.test_phase2" name="test_irrelevant_low_score" time="0.002" /><testcase classname="phase2.tests.test_phase2" name="test_po_lifecycle" time="0.021" /><testcase classname="phase2.tests.test_phase2" name="test_empty_query" time="0.009" /><testcase classname="phase2.tests.test_phase2" name="test_latency" time="0.017" /><testcase classname="phase2.tests.test_phase2" name="test_reorder_formula" time="0.016" /><testcase classname="phase2.tests.test_phase2" name="test_po_approval" time="0.014" /><testcase classname="phase2.tests.test_phase2" name="test_movement_types" time="0.017" /><testcase classname="phase2.tests.test_phase2" name="test_out_of_scope" time="0.017" /><testcase classname="phase2.tests.test_phase2" name="test_non_empty" time="0.039" /><testcase classname="phase2.tests.test_phase2" name="test_category_management" time="0.018" /><testcase classname="phase2.tests.test_phase2" name="test_langsmith" time="0.020" /><testcase classname="phase2.tests.test_phase2" name="test_otel_spans" time="0.024" /><testcase classname="phase2.tests.test_phase2" name="test_log_poc_id" time="0.025" /><testcase classname="phase2.tests.test_phase2" name="test_sources" time="0.019" /><testcase classname="phase2.tests.test_phase2" name="test_ingest_main" time="0.331" /><testcase classname="phase2.tests.test_phase2" name="test_ingest_file_not_found" time="0.002" /><testcase classname="phase2.tests.test_phase2" name="test_get_embeddings_branches" time="2.043" /><testcase classname="phase2.tests.test_phase2" name="test_local_llm_all_topics" time="0.021" /><testcase classname="phase2.tests.test_phase2" name="test_build_rag_chain_with_google_key" time="0.136" /><testcase classname="phase2.tests.test_phase2" name="test_ingest_small_chunk_warning" time="0.002" /><testcase classname="phase2.tests.test_phase2" name="test_ingest_build_vectorstore_default" time="0.112" /><testcase classname="phase2.tests.test_phase2" name="test_vectorstore_alt_paths" time="0.033" /><testcase classname="phase2.tests.test_phase2" name="test_ask_question_chain_none" time="0.016" /><testcase classname="phase2.tests.test_phase2" name="test_ask_question_exception_handling" time="0.005" /><testcase classname="phase2.tests.test_phase2" name="test_ingest_script_entrypoint" time="0.089" /><testcase classname="phase2.tests.test_phase2" name="test_get_embeddings_exception" time="0.064" /><testcase classname="phase2.tests.test_phase2" name="test_otel_exception_handling" time="0.019" /></testsuite></testsuites>
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="19" skipped="0" tests="32" time="39.541" timestamp="2026-08-16T15:38:13.274573+05:30" hostname="MithunRaj"><testcase classname="phase2.tests.test_phase2" name="test_manual_loads" time="0.002" /><testcase classname="phase2.tests.test_phase2" name="test_chunks_size" time="0.001" /><testcase classname="phase2.tests.test_phase2" name="test_min_chunks" time="0.001" /><testcase classname="phase2.tests.test_phase2" name="test_chromadb_collection" time="5.948"><failure message="chromadb.errors.InvalidArgumentError: Collection expecting embedding with dimension of 768, got 3072">def test_chromadb_collection():
+        """TC-07-P2-ING-04: ChromaDB Collection Exists"""
+        import chromadb
+        # Ensure vectorstore is built
+&gt;       build_vectorstore()
+
+phase2\tests\test_phase2.py:60: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+phase2\rag\ingest.py:85: in build_vectorstore
+    vectorstore = Chroma.from_documents(
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:887: in from_documents
+    return cls.from_texts(
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:843: in from_texts
+    chroma_collection.add_texts(
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:299: in add_texts
+    self._collection.upsert(
+phase1\venv\Lib\site-packages\chromadb\api\models\Collection.py:530: in upsert
+    self._client._upsert(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;chromadb.api.rust.RustBindingsAPI object at 0x000001E4A5559910&gt;
+collection_id = UUID('f8bef4ca-94ae-45a7-a51f-ac154bcc57bc')
+ids = ['f542feb8-cc8c-4f37-b7f4-7c80a3a458ba', '3aba4bb3-333d-4c36-9067-7beab8e80c6b', 'cb0e366b-cd72-40ba-9018-1bf9cffea058...fd86-83b2-4179-87fa-00c89b87eea3', '02a05ae0-c624-4579-a0bb-edda335ebb64', '813d4097-2427-44e3-a22d-310c161a2d30', ...]
+embeddings = [array([ 0.01679804,  0.01643548, -0.01002509, ...,  0.00236118,
+        0.0128643 , -0.00292143], shape=(3072,), dtyp...8518,  0.00998332, -0.01241033, ..., -0.02215326,
+        0.01178261, -0.01355788], shape=(3072,), dtype=float32), ...]
+metadatas = [{'source': 'C:\\Users\\2mrmi\\OneDrive\\Documents\\github-clone\\Agentic-AI-Readiness-Program\\phase2\\rag\\inventory...Users\\2mrmi\\OneDrive\\Documents\\github-clone\\Agentic-AI-Readiness-Program\\phase2\\rag\\inventory_manual.md'}, ...]
+documents = ['# Inventory Management &amp; Procurement Operations Manual\n## POC-07 — Retail Inventory Reference Guide\n\n### Section ...ed alerts remain stored in the audit log for historical reporting.\n\n### Section 5: Purchase Order (PO) Process', ...]
+uris = None, tenant = 'default_tenant', database = 'default_database'
+
+    @override
+    def _upsert(
+        self,
+        collection_id: UUID,
+        ids: IDs,
+        embeddings: Embeddings,
+        metadatas: Optional[Metadatas] = None,
+        documents: Optional[Documents] = None,
+        uris: Optional[URIs] = None,
+        tenant: str = DEFAULT_TENANT,
+        database: str = DEFAULT_DATABASE,
+    ) -&gt; bool:
+&gt;       return self.bindings.upsert(
+            str(collection_id),
+            ids,
+            embeddings,
+            metadatas,
+            documents,
+            uris,
+            tenant,
+            database,
+        )
+E       chromadb.errors.InvalidArgumentError: Collection expecting embedding with dimension of 768, got 3072
+
+phase1\venv\Lib\site-packages\chromadb\api\rust.py:541: InvalidArgumentError</failure></testcase><testcase classname="phase2.tests.test_phase2" name="test_sku_query" time="3.594"><failure message="chromadb.errors.InvalidArgumentError: Collection expecting embedding with dimension of 768, got 3072">def test_sku_query():
+        """TC-07-P2-RET-01: SKU Format Query Returns Correct Pattern"""
+        chain = build_rag_chain()
+&gt;       result = ask_question("What is the SKU format for grocery products?", chain)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+phase2\tests\test_phase2.py:82: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+phase2\rag\rag_chain.py:130: in ask_question
+    res = chain.invoke({"query": question})
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_classic\chains\base.py:167: in invoke
+    self._call(inputs, run_manager=run_manager)
+phase1\venv\Lib\site-packages\langchain_classic\chains\retrieval_qa\base.py:151: in _call
+    docs = self._get_docs(question, run_manager=_run_manager)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_classic\chains\retrieval_qa\base.py:275: in _get_docs
+    return self.retriever.invoke(
+phase1\venv\Lib\site-packages\langchain_core\retrievers.py:222: in invoke
+    result = self._get_relevant_documents(
+phase1\venv\Lib\site-packages\langchain_core\vectorstores\base.py:1045: in _get_relevant_documents
+    docs = self.vectorstore.similarity_search(query, **kwargs_)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:350: in similarity_search
+    docs_and_scores = self.similarity_search_with_score(
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:440: in similarity_search_with_score
+    results = self.__query_collection(
+phase1\venv\Lib\site-packages\langchain_core\utils\utils.py:51: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:157: in __query_collection
+    return self._collection.query(
+phase1\venv\Lib\site-packages\chromadb\api\models\Collection.py:265: in query
+    query_results = self._client._query(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;chromadb.api.rust.RustBindingsAPI object at 0x000001E4A5559910&gt;
+collection_id = UUID('f8bef4ca-94ae-45a7-a51f-ac154bcc57bc')
+query_embeddings = [array([-0.00776811,  0.01262638,  0.0130717 , ..., -0.01088787,
+       -0.01024364, -0.00327782], shape=(3072,), dtype=float32)]
+ids = None, n_results = 4, where = None, where_document = None
+include = ['metadatas', 'documents', 'distances'], tenant = 'default_tenant'
+database = 'default_database'
+
+    @override
+    def _query(
+        self,
+        collection_id: UUID,
+        query_embeddings: Embeddings,
+        ids: Optional[IDs] = None,
+        n_results: int = 10,
+        where: Optional[Where] = None,
+        where_document: Optional[WhereDocument] = None,
+        include: Include = IncludeMetadataDocumentsDistances,
+        tenant: str = DEFAULT_TENANT,
+        database: str = DEFAULT_DATABASE,
+    ) -&gt; QueryResult:
+        query_amount = len(query_embeddings)
+        filtered_ids_amount = len(ids) if ids else 0
+        self.product_telemetry_client.capture(
+            CollectionQueryEvent(
+                collection_uuid=str(collection_id),
+                query_amount=query_amount,
+                filtered_ids_amount=filtered_ids_amount,
+                n_results=n_results,
+                with_metadata_filter=query_amount if where is not None else 0,
+                with_document_filter=query_amount if where_document is not None else 0,
+                include_metadatas=query_amount if "metadatas" in include else 0,
+                include_documents=query_amount if "documents" in include else 0,
+                include_uris=query_amount if "uris" in include else 0,
+                include_distances=query_amount if "distances" in include else 0,
+            )
+        )
+    
+&gt;       rust_response = self.bindings.query(
+            str(collection_id),
+            ids,
+            query_embeddings,
+            n_results,
+            json.dumps(where) if where else None,
+            json.dumps(where_document) if where_document else None,
+            include,
+            tenant,
+            database,
+        )
+E       chromadb.errors.InvalidArgumentError: Collection expecting embedding with dimension of 768, got 3072
+
+phase1\venv\Lib\site-packages\chromadb\api\rust.py:582: InvalidArgumentError</failure></testcase><testcase classname="phase2.tests.test_phase2" name="test_top_k" time="0.118" /><testcase classname="phase2.tests.test_phase2" name="test_irrelevant_low_score" time="0.002" /><testcase classname="phase2.tests.test_phase2" name="test_po_lifecycle" time="0.707"><failure message="chromadb.errors.InvalidArgumentError: Collection expecting embedding with dimension of 768, got 3072">def test_po_lifecycle():
+        """TC-07-P2-RET-04: PO Lifecycle Query"""
+        chain = build_rag_chain()
+&gt;       result = ask_question("What are the stages of a purchase order?", chain)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+phase2\tests\test_phase2.py:108: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+phase2\rag\rag_chain.py:130: in ask_question
+    res = chain.invoke({"query": question})
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_classic\chains\base.py:167: in invoke
+    self._call(inputs, run_manager=run_manager)
+phase1\venv\Lib\site-packages\langchain_classic\chains\retrieval_qa\base.py:151: in _call
+    docs = self._get_docs(question, run_manager=_run_manager)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_classic\chains\retrieval_qa\base.py:275: in _get_docs
+    return self.retriever.invoke(
+phase1\venv\Lib\site-packages\langchain_core\retrievers.py:222: in invoke
+    result = self._get_relevant_documents(
+phase1\venv\Lib\site-packages\langchain_core\vectorstores\base.py:1045: in _get_relevant_documents
+    docs = self.vectorstore.similarity_search(query, **kwargs_)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:350: in similarity_search
+    docs_and_scores = self.similarity_search_with_score(
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:440: in similarity_search_with_score
+    results = self.__query_collection(
+phase1\venv\Lib\site-packages\langchain_core\utils\utils.py:51: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:157: in __query_collection
+    return self._collection.query(
+phase1\venv\Lib\site-packages\chromadb\api\models\Collection.py:265: in query
+    query_results = self._client._query(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;chromadb.api.rust.RustBindingsAPI object at 0x000001E4A5559910&gt;
+collection_id = UUID('f8bef4ca-94ae-45a7-a51f-ac154bcc57bc')
+query_embeddings = [array([ 0.00183549,  0.00027993,  0.00535546, ..., -0.01597617,
+        0.00187781, -0.00521358], shape=(3072,), dtype=float32)]
+ids = None, n_results = 4, where = None, where_document = None
+include = ['metadatas', 'documents', 'distances'], tenant = 'default_tenant'
+database = 'default_database'
+
+    @override
+    def _query(
+        self,
+        collection_id: UUID,
+        query_embeddings: Embeddings,
+        ids: Optional[IDs] = None,
+        n_results: int = 10,
+        where: Optional[Where] = None,
+        where_document: Optional[WhereDocument] = None,
+        include: Include = IncludeMetadataDocumentsDistances,
+        tenant: str = DEFAULT_TENANT,
+        database: str = DEFAULT_DATABASE,
+    ) -&gt; QueryResult:
+        query_amount = len(query_embeddings)
+        filtered_ids_amount = len(ids) if ids else 0
+        self.product_telemetry_client.capture(
+            CollectionQueryEvent(
+                collection_uuid=str(collection_id),
+                query_amount=query_amount,
+                filtered_ids_amount=filtered_ids_amount,
+                n_results=n_results,
+                with_metadata_filter=query_amount if where is not None else 0,
+                with_document_filter=query_amount if where_document is not None else 0,
+                include_metadatas=query_amount if "metadatas" in include else 0,
+                include_documents=query_amount if "documents" in include else 0,
+                include_uris=query_amount if "uris" in include else 0,
+                include_distances=query_amount if "distances" in include else 0,
+            )
+        )
+    
+&gt;       rust_response = self.bindings.query(
+            str(collection_id),
+            ids,
+            query_embeddings,
+            n_results,
+            json.dumps(where) if where else None,
+            json.dumps(where_document) if where_document else None,
+            include,
+            tenant,
+            database,
+        )
+E       chromadb.errors.InvalidArgumentError: Collection expecting embedding with dimension of 768, got 3072
+
+phase1\venv\Lib\site-packages\chromadb\api\rust.py:582: InvalidArgumentError</failure></testcase><testcase classname="phase2.tests.test_phase2" name="test_empty_query" time="0.112" /><testcase classname="phase2.tests.test_phase2" name="test_latency" time="0.777"><failure message="chromadb.errors.InvalidArgumentError: Collection expecting embedding with dimension of 768, got 3072">def test_latency():
+        """TC-07-P2-RET-06: Latency Under 15 Seconds"""
+        chain = build_rag_chain()
+        start = time.time()
+&gt;       ask_question("What is a reorder point?", chain)
+
+phase2\tests\test_phase2.py:127: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+phase2\rag\rag_chain.py:130: in ask_question
+    res = chain.invoke({"query": question})
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_classic\chains\base.py:167: in invoke
+    self._call(inputs, run_manager=run_manager)
+phase1\venv\Lib\site-packages\langchain_classic\chains\retrieval_qa\base.py:151: in _call
+    docs = self._get_docs(question, run_manager=_run_manager)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_classic\chains\retrieval_qa\base.py:275: in _get_docs
+    return self.retriever.invoke(
+phase1\venv\Lib\site-packages\langchain_core\retrievers.py:222: in invoke
+    result = self._get_relevant_documents(
+phase1\venv\Lib\site-packages\langchain_core\vectorstores\base.py:1045: in _get_relevant_documents
+    docs = self.vectorstore.similarity_search(query, **kwargs_)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:350: in similarity_search
+    docs_and_scores = self.similarity_search_with_score(
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:440: in similarity_search_with_score
+    results = self.__query_collection(
+phase1\venv\Lib\site-packages\langchain_core\utils\utils.py:51: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:157: in __query_collection
+    return self._collection.query(
+phase1\venv\Lib\site-packages\chromadb\api\models\Collection.py:265: in query
+    query_results = self._client._query(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;chromadb.api.rust.RustBindingsAPI object at 0x000001E4A5559910&gt;
+collection_id = UUID('f8bef4ca-94ae-45a7-a51f-ac154bcc57bc')
+query_embeddings = [array([ 0.01118116,  0.00895854, -0.001582  , ...,  0.00073997,
+       -0.00399459, -0.01815855], shape=(3072,), dtype=float32)]
+ids = None, n_results = 4, where = None, where_document = None
+include = ['metadatas', 'documents', 'distances'], tenant = 'default_tenant'
+database = 'default_database'
+
+    @override
+    def _query(
+        self,
+        collection_id: UUID,
+        query_embeddings: Embeddings,
+        ids: Optional[IDs] = None,
+        n_results: int = 10,
+        where: Optional[Where] = None,
+        where_document: Optional[WhereDocument] = None,
+        include: Include = IncludeMetadataDocumentsDistances,
+        tenant: str = DEFAULT_TENANT,
+        database: str = DEFAULT_DATABASE,
+    ) -&gt; QueryResult:
+        query_amount = len(query_embeddings)
+        filtered_ids_amount = len(ids) if ids else 0
+        self.product_telemetry_client.capture(
+            CollectionQueryEvent(
+                collection_uuid=str(collection_id),
+                query_amount=query_amount,
+                filtered_ids_amount=filtered_ids_amount,
+                n_results=n_results,
+                with_metadata_filter=query_amount if where is not None else 0,
+                with_document_filter=query_amount if where_document is not None else 0,
+                include_metadatas=query_amount if "metadatas" in include else 0,
+                include_documents=query_amount if "documents" in include else 0,
+                include_uris=query_amount if "uris" in include else 0,
+                include_distances=query_amount if "distances" in include else 0,
+            )
+        )
+    
+&gt;       rust_response = self.bindings.query(
+            str(collection_id),
+            ids,
+            query_embeddings,
+            n_results,
+            json.dumps(where) if where else None,
+            json.dumps(where_document) if where_document else None,
+            include,
+            tenant,
+            database,
+        )
+E       chromadb.errors.InvalidArgumentError: Collection expecting embedding with dimension of 768, got 3072
+
+phase1\venv\Lib\site-packages\chromadb\api\rust.py:582: InvalidArgumentError</failure></testcase><testcase classname="phase2.tests.test_phase2" name="test_reorder_formula" time="0.818"><failure message="chromadb.errors.InvalidArgumentError: Collection expecting embedding with dimension of 768, got 3072">def test_reorder_formula():
+        """TC-07-P2-GEN-01: Reorder Point Formula Explained"""
+        chain = build_rag_chain()
+&gt;       result = ask_question("How do I calculate a reorder point?", chain)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+phase2\tests\test_phase2.py:139: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+phase2\rag\rag_chain.py:130: in ask_question
+    res = chain.invoke({"query": question})
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_classic\chains\base.py:167: in invoke
+    self._call(inputs, run_manager=run_manager)
+phase1\venv\Lib\site-packages\langchain_classic\chains\retrieval_qa\base.py:151: in _call
+    docs = self._get_docs(question, run_manager=_run_manager)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_classic\chains\retrieval_qa\base.py:275: in _get_docs
+    return self.retriever.invoke(
+phase1\venv\Lib\site-packages\langchain_core\retrievers.py:222: in invoke
+    result = self._get_relevant_documents(
+phase1\venv\Lib\site-packages\langchain_core\vectorstores\base.py:1045: in _get_relevant_documents
+    docs = self.vectorstore.similarity_search(query, **kwargs_)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:350: in similarity_search
+    docs_and_scores = self.similarity_search_with_score(
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:440: in similarity_search_with_score
+    results = self.__query_collection(
+phase1\venv\Lib\site-packages\langchain_core\utils\utils.py:51: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:157: in __query_collection
+    return self._collection.query(
+phase1\venv\Lib\site-packages\chromadb\api\models\Collection.py:265: in query
+    query_results = self._client._query(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;chromadb.api.rust.RustBindingsAPI object at 0x000001E4A5559910&gt;
+collection_id = UUID('f8bef4ca-94ae-45a7-a51f-ac154bcc57bc')
+query_embeddings = [array([ 1.5441632e-02,  8.1617143e-03,  5.4351247e-05, ...,
+        4.3318984e-03, -3.9415229e-03, -2.3833526e-02],
+      shape=(3072,), dtype=float32)]
+ids = None, n_results = 4, where = None, where_document = None
+include = ['metadatas', 'documents', 'distances'], tenant = 'default_tenant'
+database = 'default_database'
+
+    @override
+    def _query(
+        self,
+        collection_id: UUID,
+        query_embeddings: Embeddings,
+        ids: Optional[IDs] = None,
+        n_results: int = 10,
+        where: Optional[Where] = None,
+        where_document: Optional[WhereDocument] = None,
+        include: Include = IncludeMetadataDocumentsDistances,
+        tenant: str = DEFAULT_TENANT,
+        database: str = DEFAULT_DATABASE,
+    ) -&gt; QueryResult:
+        query_amount = len(query_embeddings)
+        filtered_ids_amount = len(ids) if ids else 0
+        self.product_telemetry_client.capture(
+            CollectionQueryEvent(
+                collection_uuid=str(collection_id),
+                query_amount=query_amount,
+                filtered_ids_amount=filtered_ids_amount,
+                n_results=n_results,
+                with_metadata_filter=query_amount if where is not None else 0,
+                with_document_filter=query_amount if where_document is not None else 0,
+                include_metadatas=query_amount if "metadatas" in include else 0,
+                include_documents=query_amount if "documents" in include else 0,
+                include_uris=query_amount if "uris" in include else 0,
+                include_distances=query_amount if "distances" in include else 0,
+            )
+        )
+    
+&gt;       rust_response = self.bindings.query(
+            str(collection_id),
+            ids,
+            query_embeddings,
+            n_results,
+            json.dumps(where) if where else None,
+            json.dumps(where_document) if where_document else None,
+            include,
+            tenant,
+            database,
+        )
+E       chromadb.errors.InvalidArgumentError: Collection expecting embedding with dimension of 768, got 3072
+
+phase1\venv\Lib\site-packages\chromadb\api\rust.py:582: InvalidArgumentError</failure></testcase><testcase classname="phase2.tests.test_phase2" name="test_po_approval" time="0.804"><failure message="chromadb.errors.InvalidArgumentError: Collection expecting embedding with dimension of 768, got 3072">def test_po_approval():
+        """TC-07-P2-GEN-02: PO Approval Threshold Correct"""
+        chain = build_rag_chain()
+&gt;       result = ask_question("When does a PO need Store Manager approval?", chain)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+phase2\tests\test_phase2.py:147: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+phase2\rag\rag_chain.py:130: in ask_question
+    res = chain.invoke({"query": question})
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_classic\chains\base.py:167: in invoke
+    self._call(inputs, run_manager=run_manager)
+phase1\venv\Lib\site-packages\langchain_classic\chains\retrieval_qa\base.py:151: in _call
+    docs = self._get_docs(question, run_manager=_run_manager)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_classic\chains\retrieval_qa\base.py:275: in _get_docs
+    return self.retriever.invoke(
+phase1\venv\Lib\site-packages\langchain_core\retrievers.py:222: in invoke
+    result = self._get_relevant_documents(
+phase1\venv\Lib\site-packages\langchain_core\vectorstores\base.py:1045: in _get_relevant_documents
+    docs = self.vectorstore.similarity_search(query, **kwargs_)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:350: in similarity_search
+    docs_and_scores = self.similarity_search_with_score(
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:440: in similarity_search_with_score
+    results = self.__query_collection(
+phase1\venv\Lib\site-packages\langchain_core\utils\utils.py:51: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:157: in __query_collection
+    return self._collection.query(
+phase1\venv\Lib\site-packages\chromadb\api\models\Collection.py:265: in query
+    query_results = self._client._query(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;chromadb.api.rust.RustBindingsAPI object at 0x000001E4A5559910&gt;
+collection_id = UUID('f8bef4ca-94ae-45a7-a51f-ac154bcc57bc')
+query_embeddings = [array([ 0.02319291,  0.00162958,  0.00125682, ..., -0.01375874,
+       -0.00665463, -0.02803824], shape=(3072,), dtype=float32)]
+ids = None, n_results = 4, where = None, where_document = None
+include = ['metadatas', 'documents', 'distances'], tenant = 'default_tenant'
+database = 'default_database'
+
+    @override
+    def _query(
+        self,
+        collection_id: UUID,
+        query_embeddings: Embeddings,
+        ids: Optional[IDs] = None,
+        n_results: int = 10,
+        where: Optional[Where] = None,
+        where_document: Optional[WhereDocument] = None,
+        include: Include = IncludeMetadataDocumentsDistances,
+        tenant: str = DEFAULT_TENANT,
+        database: str = DEFAULT_DATABASE,
+    ) -&gt; QueryResult:
+        query_amount = len(query_embeddings)
+        filtered_ids_amount = len(ids) if ids else 0
+        self.product_telemetry_client.capture(
+            CollectionQueryEvent(
+                collection_uuid=str(collection_id),
+                query_amount=query_amount,
+                filtered_ids_amount=filtered_ids_amount,
+                n_results=n_results,
+                with_metadata_filter=query_amount if where is not None else 0,
+                with_document_filter=query_amount if where_document is not None else 0,
+                include_metadatas=query_amount if "metadatas" in include else 0,
+                include_documents=query_amount if "documents" in include else 0,
+                include_uris=query_amount if "uris" in include else 0,
+                include_distances=query_amount if "distances" in include else 0,
+            )
+        )
+    
+&gt;       rust_response = self.bindings.query(
+            str(collection_id),
+            ids,
+            query_embeddings,
+            n_results,
+            json.dumps(where) if where else None,
+            json.dumps(where_document) if where_document else None,
+            include,
+            tenant,
+            database,
+        )
+E       chromadb.errors.InvalidArgumentError: Collection expecting embedding with dimension of 768, got 3072
+
+phase1\venv\Lib\site-packages\chromadb\api\rust.py:582: InvalidArgumentError</failure></testcase><testcase classname="phase2.tests.test_phase2" name="test_movement_types" time="0.800"><failure message="chromadb.errors.InvalidArgumentError: Collection expecting embedding with dimension of 768, got 3072">def test_movement_types():
+        """TC-07-P2-GEN-03: Stock Movement Types Listed"""
+        chain = build_rag_chain()
+&gt;       result = ask_question("What are the stock movement types?", chain)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+phase2\tests\test_phase2.py:155: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+phase2\rag\rag_chain.py:130: in ask_question
+    res = chain.invoke({"query": question})
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_classic\chains\base.py:167: in invoke
+    self._call(inputs, run_manager=run_manager)
+phase1\venv\Lib\site-packages\langchain_classic\chains\retrieval_qa\base.py:151: in _call
+    docs = self._get_docs(question, run_manager=_run_manager)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_classic\chains\retrieval_qa\base.py:275: in _get_docs
+    return self.retriever.invoke(
+phase1\venv\Lib\site-packages\langchain_core\retrievers.py:222: in invoke
+    result = self._get_relevant_documents(
+phase1\venv\Lib\site-packages\langchain_core\vectorstores\base.py:1045: in _get_relevant_documents
+    docs = self.vectorstore.similarity_search(query, **kwargs_)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:350: in similarity_search
+    docs_and_scores = self.similarity_search_with_score(
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:440: in similarity_search_with_score
+    results = self.__query_collection(
+phase1\venv\Lib\site-packages\langchain_core\utils\utils.py:51: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:157: in __query_collection
+    return self._collection.query(
+phase1\venv\Lib\site-packages\chromadb\api\models\Collection.py:265: in query
+    query_results = self._client._query(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;chromadb.api.rust.RustBindingsAPI object at 0x000001E4A5559910&gt;
+collection_id = UUID('f8bef4ca-94ae-45a7-a51f-ac154bcc57bc')
+query_embeddings = [array([ 0.02096471, -0.01544176, -0.02813736, ..., -0.01759786,
+        0.00701043, -0.00559108], shape=(3072,), dtype=float32)]
+ids = None, n_results = 4, where = None, where_document = None
+include = ['metadatas', 'documents', 'distances'], tenant = 'default_tenant'
+database = 'default_database'
+
+    @override
+    def _query(
+        self,
+        collection_id: UUID,
+        query_embeddings: Embeddings,
+        ids: Optional[IDs] = None,
+        n_results: int = 10,
+        where: Optional[Where] = None,
+        where_document: Optional[WhereDocument] = None,
+        include: Include = IncludeMetadataDocumentsDistances,
+        tenant: str = DEFAULT_TENANT,
+        database: str = DEFAULT_DATABASE,
+    ) -&gt; QueryResult:
+        query_amount = len(query_embeddings)
+        filtered_ids_amount = len(ids) if ids else 0
+        self.product_telemetry_client.capture(
+            CollectionQueryEvent(
+                collection_uuid=str(collection_id),
+                query_amount=query_amount,
+                filtered_ids_amount=filtered_ids_amount,
+                n_results=n_results,
+                with_metadata_filter=query_amount if where is not None else 0,
+                with_document_filter=query_amount if where_document is not None else 0,
+                include_metadatas=query_amount if "metadatas" in include else 0,
+                include_documents=query_amount if "documents" in include else 0,
+                include_uris=query_amount if "uris" in include else 0,
+                include_distances=query_amount if "distances" in include else 0,
+            )
+        )
+    
+&gt;       rust_response = self.bindings.query(
+            str(collection_id),
+            ids,
+            query_embeddings,
+            n_results,
+            json.dumps(where) if where else None,
+            json.dumps(where_document) if where_document else None,
+            include,
+            tenant,
+            database,
+        )
+E       chromadb.errors.InvalidArgumentError: Collection expecting embedding with dimension of 768, got 3072
+
+phase1\venv\Lib\site-packages\chromadb\api\rust.py:582: InvalidArgumentError</failure></testcase><testcase classname="phase2.tests.test_phase2" name="test_out_of_scope" time="0.794"><failure message="chromadb.errors.InvalidArgumentError: Collection expecting embedding with dimension of 768, got 3072">def test_out_of_scope():
+        """TC-07-P2-GEN-04: Out-of-Scope Declined"""
+        chain = build_rag_chain()
+&gt;       result = ask_question("What is the weather forecast for Mumbai?", chain)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+phase2\tests\test_phase2.py:163: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+phase2\rag\rag_chain.py:130: in ask_question
+    res = chain.invoke({"query": question})
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_classic\chains\base.py:167: in invoke
+    self._call(inputs, run_manager=run_manager)
+phase1\venv\Lib\site-packages\langchain_classic\chains\retrieval_qa\base.py:151: in _call
+    docs = self._get_docs(question, run_manager=_run_manager)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_classic\chains\retrieval_qa\base.py:275: in _get_docs
+    return self.retriever.invoke(
+phase1\venv\Lib\site-packages\langchain_core\retrievers.py:222: in invoke
+    result = self._get_relevant_documents(
+phase1\venv\Lib\site-packages\langchain_core\vectorstores\base.py:1045: in _get_relevant_documents
+    docs = self.vectorstore.similarity_search(query, **kwargs_)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:350: in similarity_search
+    docs_and_scores = self.similarity_search_with_score(
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:440: in similarity_search_with_score
+    results = self.__query_collection(
+phase1\venv\Lib\site-packages\langchain_core\utils\utils.py:51: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:157: in __query_collection
+    return self._collection.query(
+phase1\venv\Lib\site-packages\chromadb\api\models\Collection.py:265: in query
+    query_results = self._client._query(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;chromadb.api.rust.RustBindingsAPI object at 0x000001E4A5559910&gt;
+collection_id = UUID('f8bef4ca-94ae-45a7-a51f-ac154bcc57bc')
+query_embeddings = [array([ 0.02790351,  0.01231659,  0.00646886, ...,  0.00614713,
+        0.00334075, -0.00158699], shape=(3072,), dtype=float32)]
+ids = None, n_results = 4, where = None, where_document = None
+include = ['metadatas', 'documents', 'distances'], tenant = 'default_tenant'
+database = 'default_database'
+
+    @override
+    def _query(
+        self,
+        collection_id: UUID,
+        query_embeddings: Embeddings,
+        ids: Optional[IDs] = None,
+        n_results: int = 10,
+        where: Optional[Where] = None,
+        where_document: Optional[WhereDocument] = None,
+        include: Include = IncludeMetadataDocumentsDistances,
+        tenant: str = DEFAULT_TENANT,
+        database: str = DEFAULT_DATABASE,
+    ) -&gt; QueryResult:
+        query_amount = len(query_embeddings)
+        filtered_ids_amount = len(ids) if ids else 0
+        self.product_telemetry_client.capture(
+            CollectionQueryEvent(
+                collection_uuid=str(collection_id),
+                query_amount=query_amount,
+                filtered_ids_amount=filtered_ids_amount,
+                n_results=n_results,
+                with_metadata_filter=query_amount if where is not None else 0,
+                with_document_filter=query_amount if where_document is not None else 0,
+                include_metadatas=query_amount if "metadatas" in include else 0,
+                include_documents=query_amount if "documents" in include else 0,
+                include_uris=query_amount if "uris" in include else 0,
+                include_distances=query_amount if "distances" in include else 0,
+            )
+        )
+    
+&gt;       rust_response = self.bindings.query(
+            str(collection_id),
+            ids,
+            query_embeddings,
+            n_results,
+            json.dumps(where) if where else None,
+            json.dumps(where_document) if where_document else None,
+            include,
+            tenant,
+            database,
+        )
+E       chromadb.errors.InvalidArgumentError: Collection expecting embedding with dimension of 768, got 3072
+
+phase1\venv\Lib\site-packages\chromadb\api\rust.py:582: InvalidArgumentError</failure></testcase><testcase classname="phase2.tests.test_phase2" name="test_non_empty" time="0.650"><failure message="chromadb.errors.InvalidArgumentError: Collection expecting embedding with dimension of 768, got 3072">def test_non_empty():
+        """TC-07-P2-GEN-05: Non-Empty Answers"""
+        chain = build_rag_chain()
+        for q in ["What is SKU?", "What is FIFO?", "What is a stockout?"]:
+&gt;           res = ask_question(q, chain)
+                  ^^^^^^^^^^^^^^^^^^^^^^
+
+phase2\tests\test_phase2.py:172: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+phase2\rag\rag_chain.py:130: in ask_question
+    res = chain.invoke({"query": question})
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_classic\chains\base.py:167: in invoke
+    self._call(inputs, run_manager=run_manager)
+phase1\venv\Lib\site-packages\langchain_classic\chains\retrieval_qa\base.py:151: in _call
+    docs = self._get_docs(question, run_manager=_run_manager)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_classic\chains\retrieval_qa\base.py:275: in _get_docs
+    return self.retriever.invoke(
+phase1\venv\Lib\site-packages\langchain_core\retrievers.py:222: in invoke
+    result = self._get_relevant_documents(
+phase1\venv\Lib\site-packages\langchain_core\vectorstores\base.py:1045: in _get_relevant_documents
+    docs = self.vectorstore.similarity_search(query, **kwargs_)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:350: in similarity_search
+    docs_and_scores = self.similarity_search_with_score(
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:440: in similarity_search_with_score
+    results = self.__query_collection(
+phase1\venv\Lib\site-packages\langchain_core\utils\utils.py:51: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:157: in __query_collection
+    return self._collection.query(
+phase1\venv\Lib\site-packages\chromadb\api\models\Collection.py:265: in query
+    query_results = self._client._query(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;chromadb.api.rust.RustBindingsAPI object at 0x000001E4A5559910&gt;
+collection_id = UUID('f8bef4ca-94ae-45a7-a51f-ac154bcc57bc')
+query_embeddings = [array([-0.00876106,  0.01942922, -0.00420726, ..., -0.02270697,
+       -0.00338398, -0.00681917], shape=(3072,), dtype=float32)]
+ids = None, n_results = 4, where = None, where_document = None
+include = ['metadatas', 'documents', 'distances'], tenant = 'default_tenant'
+database = 'default_database'
+
+    @override
+    def _query(
+        self,
+        collection_id: UUID,
+        query_embeddings: Embeddings,
+        ids: Optional[IDs] = None,
+        n_results: int = 10,
+        where: Optional[Where] = None,
+        where_document: Optional[WhereDocument] = None,
+        include: Include = IncludeMetadataDocumentsDistances,
+        tenant: str = DEFAULT_TENANT,
+        database: str = DEFAULT_DATABASE,
+    ) -&gt; QueryResult:
+        query_amount = len(query_embeddings)
+        filtered_ids_amount = len(ids) if ids else 0
+        self.product_telemetry_client.capture(
+            CollectionQueryEvent(
+                collection_uuid=str(collection_id),
+                query_amount=query_amount,
+                filtered_ids_amount=filtered_ids_amount,
+                n_results=n_results,
+                with_metadata_filter=query_amount if where is not None else 0,
+                with_document_filter=query_amount if where_document is not None else 0,
+                include_metadatas=query_amount if "metadatas" in include else 0,
+                include_documents=query_amount if "documents" in include else 0,
+                include_uris=query_amount if "uris" in include else 0,
+                include_distances=query_amount if "distances" in include else 0,
+            )
+        )
+    
+&gt;       rust_response = self.bindings.query(
+            str(collection_id),
+            ids,
+            query_embeddings,
+            n_results,
+            json.dumps(where) if where else None,
+            json.dumps(where_document) if where_document else None,
+            include,
+            tenant,
+            database,
+        )
+E       chromadb.errors.InvalidArgumentError: Collection expecting embedding with dimension of 768, got 3072
+
+phase1\venv\Lib\site-packages\chromadb\api\rust.py:582: InvalidArgumentError</failure></testcase><testcase classname="phase2.tests.test_phase2" name="test_category_management" time="0.812"><failure message="chromadb.errors.InvalidArgumentError: Collection expecting embedding with dimension of 768, got 3072">def test_category_management():
+        """TC-07-P2-GEN-06: Category Management Differences"""
+        chain = build_rag_chain()
+&gt;       result = ask_question("How do grocery products differ from electronics in inventory management?", chain)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+phase2\tests\test_phase2.py:180: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+phase2\rag\rag_chain.py:130: in ask_question
+    res = chain.invoke({"query": question})
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_classic\chains\base.py:167: in invoke
+    self._call(inputs, run_manager=run_manager)
+phase1\venv\Lib\site-packages\langchain_classic\chains\retrieval_qa\base.py:151: in _call
+    docs = self._get_docs(question, run_manager=_run_manager)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_classic\chains\retrieval_qa\base.py:275: in _get_docs
+    return self.retriever.invoke(
+phase1\venv\Lib\site-packages\langchain_core\retrievers.py:222: in invoke
+    result = self._get_relevant_documents(
+phase1\venv\Lib\site-packages\langchain_core\vectorstores\base.py:1045: in _get_relevant_documents
+    docs = self.vectorstore.similarity_search(query, **kwargs_)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:350: in similarity_search
+    docs_and_scores = self.similarity_search_with_score(
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:440: in similarity_search_with_score
+    results = self.__query_collection(
+phase1\venv\Lib\site-packages\langchain_core\utils\utils.py:51: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:157: in __query_collection
+    return self._collection.query(
+phase1\venv\Lib\site-packages\chromadb\api\models\Collection.py:265: in query
+    query_results = self._client._query(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;chromadb.api.rust.RustBindingsAPI object at 0x000001E4A5559910&gt;
+collection_id = UUID('f8bef4ca-94ae-45a7-a51f-ac154bcc57bc')
+query_embeddings = [array([ 0.00698609,  0.01282093, -0.01252629, ..., -0.02386995,
+        0.01311722,  0.00994169], shape=(3072,), dtype=float32)]
+ids = None, n_results = 4, where = None, where_document = None
+include = ['metadatas', 'documents', 'distances'], tenant = 'default_tenant'
+database = 'default_database'
+
+    @override
+    def _query(
+        self,
+        collection_id: UUID,
+        query_embeddings: Embeddings,
+        ids: Optional[IDs] = None,
+        n_results: int = 10,
+        where: Optional[Where] = None,
+        where_document: Optional[WhereDocument] = None,
+        include: Include = IncludeMetadataDocumentsDistances,
+        tenant: str = DEFAULT_TENANT,
+        database: str = DEFAULT_DATABASE,
+    ) -&gt; QueryResult:
+        query_amount = len(query_embeddings)
+        filtered_ids_amount = len(ids) if ids else 0
+        self.product_telemetry_client.capture(
+            CollectionQueryEvent(
+                collection_uuid=str(collection_id),
+                query_amount=query_amount,
+                filtered_ids_amount=filtered_ids_amount,
+                n_results=n_results,
+                with_metadata_filter=query_amount if where is not None else 0,
+                with_document_filter=query_amount if where_document is not None else 0,
+                include_metadatas=query_amount if "metadatas" in include else 0,
+                include_documents=query_amount if "documents" in include else 0,
+                include_uris=query_amount if "uris" in include else 0,
+                include_distances=query_amount if "distances" in include else 0,
+            )
+        )
+    
+&gt;       rust_response = self.bindings.query(
+            str(collection_id),
+            ids,
+            query_embeddings,
+            n_results,
+            json.dumps(where) if where else None,
+            json.dumps(where_document) if where_document else None,
+            include,
+            tenant,
+            database,
+        )
+E       chromadb.errors.InvalidArgumentError: Collection expecting embedding with dimension of 768, got 3072
+
+phase1\venv\Lib\site-packages\chromadb\api\rust.py:582: InvalidArgumentError</failure></testcase><testcase classname="phase2.tests.test_phase2" name="test_langsmith" time="0.755"><failure message="chromadb.errors.InvalidArgumentError: Collection expecting embedding with dimension of 768, got 3072">def test_langsmith():
+        """TC-07-P2-OBS-01: LangSmith Trace"""
+        if not os.getenv("LANGCHAIN_API_KEY"):
+            os.environ["LANGCHAIN_API_KEY"] = "ls__test_key_poc07"
+        chain = build_rag_chain()
+&gt;       res = ask_question("What is a reorder point?", chain)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+phase2\tests\test_phase2.py:194: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+phase2\rag\rag_chain.py:126: in ask_question
+    res = _run_query(question, chain)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langsmith\run_helpers.py:777: in wrapper
+    function_result = run_container["context"].run(
+phase2\rag\rag_chain.py:125: in _run_query
+    return c.invoke({"query": q})
+           ^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_classic\chains\base.py:167: in invoke
+    self._call(inputs, run_manager=run_manager)
+phase1\venv\Lib\site-packages\langchain_classic\chains\retrieval_qa\base.py:151: in _call
+    docs = self._get_docs(question, run_manager=_run_manager)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_classic\chains\retrieval_qa\base.py:275: in _get_docs
+    return self.retriever.invoke(
+phase1\venv\Lib\site-packages\langchain_core\retrievers.py:222: in invoke
+    result = self._get_relevant_documents(
+phase1\venv\Lib\site-packages\langchain_core\vectorstores\base.py:1045: in _get_relevant_documents
+    docs = self.vectorstore.similarity_search(query, **kwargs_)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:350: in similarity_search
+    docs_and_scores = self.similarity_search_with_score(
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:440: in similarity_search_with_score
+    results = self.__query_collection(
+phase1\venv\Lib\site-packages\langchain_core\utils\utils.py:51: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:157: in __query_collection
+    return self._collection.query(
+phase1\venv\Lib\site-packages\chromadb\api\models\Collection.py:265: in query
+    query_results = self._client._query(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;chromadb.api.rust.RustBindingsAPI object at 0x000001E4A5559910&gt;
+collection_id = UUID('f8bef4ca-94ae-45a7-a51f-ac154bcc57bc')
+query_embeddings = [array([ 0.01118116,  0.00895854, -0.001582  , ...,  0.00073997,
+       -0.00399459, -0.01815855], shape=(3072,), dtype=float32)]
+ids = None, n_results = 4, where = None, where_document = None
+include = ['metadatas', 'documents', 'distances'], tenant = 'default_tenant'
+database = 'default_database'
+
+    @override
+    def _query(
+        self,
+        collection_id: UUID,
+        query_embeddings: Embeddings,
+        ids: Optional[IDs] = None,
+        n_results: int = 10,
+        where: Optional[Where] = None,
+        where_document: Optional[WhereDocument] = None,
+        include: Include = IncludeMetadataDocumentsDistances,
+        tenant: str = DEFAULT_TENANT,
+        database: str = DEFAULT_DATABASE,
+    ) -&gt; QueryResult:
+        query_amount = len(query_embeddings)
+        filtered_ids_amount = len(ids) if ids else 0
+        self.product_telemetry_client.capture(
+            CollectionQueryEvent(
+                collection_uuid=str(collection_id),
+                query_amount=query_amount,
+                filtered_ids_amount=filtered_ids_amount,
+                n_results=n_results,
+                with_metadata_filter=query_amount if where is not None else 0,
+                with_document_filter=query_amount if where_document is not None else 0,
+                include_metadatas=query_amount if "metadatas" in include else 0,
+                include_documents=query_amount if "documents" in include else 0,
+                include_uris=query_amount if "uris" in include else 0,
+                include_distances=query_amount if "distances" in include else 0,
+            )
+        )
+    
+&gt;       rust_response = self.bindings.query(
+            str(collection_id),
+            ids,
+            query_embeddings,
+            n_results,
+            json.dumps(where) if where else None,
+            json.dumps(where_document) if where_document else None,
+            include,
+            tenant,
+            database,
+        )
+E       chromadb.errors.InvalidArgumentError: Collection expecting embedding with dimension of 768, got 3072
+
+phase1\venv\Lib\site-packages\chromadb\api\rust.py:582: InvalidArgumentError</failure></testcase><testcase classname="phase2.tests.test_phase2" name="test_otel_spans" time="3.771" /><testcase classname="phase2.tests.test_phase2" name="test_log_poc_id" time="1.932"><failure message="chromadb.errors.InvalidArgumentError: Collection expecting embedding with dimension of 768, got 3072">capfd = &lt;_pytest.capture.CaptureFixture object at 0x000001E4A57660D0&gt;
+
+    def test_log_poc_id(capfd):
+        """TC-07-P2-OBS-03: Log Contains poc_id"""
+        chain = build_rag_chain()
+&gt;       ask_question("What is a stock movement?", chain)
+
+phase2\tests\test_phase2.py:224: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+phase2\rag\rag_chain.py:126: in ask_question
+    res = _run_query(question, chain)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langsmith\run_helpers.py:777: in wrapper
+    function_result = run_container["context"].run(
+phase2\rag\rag_chain.py:125: in _run_query
+    return c.invoke({"query": q})
+           ^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_classic\chains\base.py:167: in invoke
+    self._call(inputs, run_manager=run_manager)
+phase1\venv\Lib\site-packages\langchain_classic\chains\retrieval_qa\base.py:151: in _call
+    docs = self._get_docs(question, run_manager=_run_manager)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_classic\chains\retrieval_qa\base.py:275: in _get_docs
+    return self.retriever.invoke(
+phase1\venv\Lib\site-packages\langchain_core\retrievers.py:222: in invoke
+    result = self._get_relevant_documents(
+phase1\venv\Lib\site-packages\langchain_core\vectorstores\base.py:1045: in _get_relevant_documents
+    docs = self.vectorstore.similarity_search(query, **kwargs_)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:350: in similarity_search
+    docs_and_scores = self.similarity_search_with_score(
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:440: in similarity_search_with_score
+    results = self.__query_collection(
+phase1\venv\Lib\site-packages\langchain_core\utils\utils.py:51: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:157: in __query_collection
+    return self._collection.query(
+phase1\venv\Lib\site-packages\chromadb\api\models\Collection.py:265: in query
+    query_results = self._client._query(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;chromadb.api.rust.RustBindingsAPI object at 0x000001E4A5559910&gt;
+collection_id = UUID('f8bef4ca-94ae-45a7-a51f-ac154bcc57bc')
+query_embeddings = [array([ 0.01957347, -0.00687416, -0.02487017, ..., -0.02009922,
+        0.01598506, -0.01958257], shape=(3072,), dtype=float32)]
+ids = None, n_results = 4, where = None, where_document = None
+include = ['metadatas', 'documents', 'distances'], tenant = 'default_tenant'
+database = 'default_database'
+
+    @override
+    def _query(
+        self,
+        collection_id: UUID,
+        query_embeddings: Embeddings,
+        ids: Optional[IDs] = None,
+        n_results: int = 10,
+        where: Optional[Where] = None,
+        where_document: Optional[WhereDocument] = None,
+        include: Include = IncludeMetadataDocumentsDistances,
+        tenant: str = DEFAULT_TENANT,
+        database: str = DEFAULT_DATABASE,
+    ) -&gt; QueryResult:
+        query_amount = len(query_embeddings)
+        filtered_ids_amount = len(ids) if ids else 0
+        self.product_telemetry_client.capture(
+            CollectionQueryEvent(
+                collection_uuid=str(collection_id),
+                query_amount=query_amount,
+                filtered_ids_amount=filtered_ids_amount,
+                n_results=n_results,
+                with_metadata_filter=query_amount if where is not None else 0,
+                with_document_filter=query_amount if where_document is not None else 0,
+                include_metadatas=query_amount if "metadatas" in include else 0,
+                include_documents=query_amount if "documents" in include else 0,
+                include_uris=query_amount if "uris" in include else 0,
+                include_distances=query_amount if "distances" in include else 0,
+            )
+        )
+    
+&gt;       rust_response = self.bindings.query(
+            str(collection_id),
+            ids,
+            query_embeddings,
+            n_results,
+            json.dumps(where) if where else None,
+            json.dumps(where_document) if where_document else None,
+            include,
+            tenant,
+            database,
+        )
+E       chromadb.errors.InvalidArgumentError: Collection expecting embedding with dimension of 768, got 3072
+
+phase1\venv\Lib\site-packages\chromadb\api\rust.py:582: InvalidArgumentError</failure></testcase><testcase classname="phase2.tests.test_phase2" name="test_sources" time="0.748"><failure message="chromadb.errors.InvalidArgumentError: Collection expecting embedding with dimension of 768, got 3072">def test_sources():
+        """TC-07-P2-OBS-04: Sources Returned"""
+        chain = build_rag_chain()
+&gt;       result = ask_question("How does PO receiving update stock?", chain)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+phase2\tests\test_phase2.py:232: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+phase2\rag\rag_chain.py:126: in ask_question
+    res = _run_query(question, chain)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langsmith\run_helpers.py:777: in wrapper
+    function_result = run_container["context"].run(
+phase2\rag\rag_chain.py:125: in _run_query
+    return c.invoke({"query": q})
+           ^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_classic\chains\base.py:167: in invoke
+    self._call(inputs, run_manager=run_manager)
+phase1\venv\Lib\site-packages\langchain_classic\chains\retrieval_qa\base.py:151: in _call
+    docs = self._get_docs(question, run_manager=_run_manager)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_classic\chains\retrieval_qa\base.py:275: in _get_docs
+    return self.retriever.invoke(
+phase1\venv\Lib\site-packages\langchain_core\retrievers.py:222: in invoke
+    result = self._get_relevant_documents(
+phase1\venv\Lib\site-packages\langchain_core\vectorstores\base.py:1045: in _get_relevant_documents
+    docs = self.vectorstore.similarity_search(query, **kwargs_)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:350: in similarity_search
+    docs_and_scores = self.similarity_search_with_score(
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:440: in similarity_search_with_score
+    results = self.__query_collection(
+phase1\venv\Lib\site-packages\langchain_core\utils\utils.py:51: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:157: in __query_collection
+    return self._collection.query(
+phase1\venv\Lib\site-packages\chromadb\api\models\Collection.py:265: in query
+    query_results = self._client._query(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;chromadb.api.rust.RustBindingsAPI object at 0x000001E4A5559910&gt;
+collection_id = UUID('f8bef4ca-94ae-45a7-a51f-ac154bcc57bc')
+query_embeddings = [array([ 0.01810304,  0.01037593, -0.03182546, ..., -0.02565582,
+        0.01135023, -0.03029201], shape=(3072,), dtype=float32)]
+ids = None, n_results = 4, where = None, where_document = None
+include = ['metadatas', 'documents', 'distances'], tenant = 'default_tenant'
+database = 'default_database'
+
+    @override
+    def _query(
+        self,
+        collection_id: UUID,
+        query_embeddings: Embeddings,
+        ids: Optional[IDs] = None,
+        n_results: int = 10,
+        where: Optional[Where] = None,
+        where_document: Optional[WhereDocument] = None,
+        include: Include = IncludeMetadataDocumentsDistances,
+        tenant: str = DEFAULT_TENANT,
+        database: str = DEFAULT_DATABASE,
+    ) -&gt; QueryResult:
+        query_amount = len(query_embeddings)
+        filtered_ids_amount = len(ids) if ids else 0
+        self.product_telemetry_client.capture(
+            CollectionQueryEvent(
+                collection_uuid=str(collection_id),
+                query_amount=query_amount,
+                filtered_ids_amount=filtered_ids_amount,
+                n_results=n_results,
+                with_metadata_filter=query_amount if where is not None else 0,
+                with_document_filter=query_amount if where_document is not None else 0,
+                include_metadatas=query_amount if "metadatas" in include else 0,
+                include_documents=query_amount if "documents" in include else 0,
+                include_uris=query_amount if "uris" in include else 0,
+                include_distances=query_amount if "distances" in include else 0,
+            )
+        )
+    
+&gt;       rust_response = self.bindings.query(
+            str(collection_id),
+            ids,
+            query_embeddings,
+            n_results,
+            json.dumps(where) if where else None,
+            json.dumps(where_document) if where_document else None,
+            include,
+            tenant,
+            database,
+        )
+E       chromadb.errors.InvalidArgumentError: Collection expecting embedding with dimension of 768, got 3072
+
+phase1\venv\Lib\site-packages\chromadb\api\rust.py:582: InvalidArgumentError</failure></testcase><testcase classname="phase2.tests.test_phase2" name="test_ingest_main" time="1.964"><failure message="chromadb.errors.InvalidArgumentError: Collection expecting embedding with dimension of 768, got 3072">def test_ingest_main():
+        """Test ingestion main entrypoint"""
+        from phase2.rag.ingest import main as ingest_main, get_manual_path
+&gt;       ingest_main()
+
+phase2\tests\test_phase2.py:244: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+phase2\rag\ingest.py:100: in main
+    build_vectorstore(chunks=chunks)
+phase2\rag\ingest.py:85: in build_vectorstore
+    vectorstore = Chroma.from_documents(
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:887: in from_documents
+    return cls.from_texts(
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:843: in from_texts
+    chroma_collection.add_texts(
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:299: in add_texts
+    self._collection.upsert(
+phase1\venv\Lib\site-packages\chromadb\api\models\Collection.py:530: in upsert
+    self._client._upsert(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;chromadb.api.rust.RustBindingsAPI object at 0x000001E4A5559910&gt;
+collection_id = UUID('f8bef4ca-94ae-45a7-a51f-ac154bcc57bc')
+ids = ['d0ac74c8-2e84-4ca4-9842-3a0cd62ae9d6', '1747a21a-181b-4dcb-b70f-51e642e18d78', 'b1c678ce-bb36-49c9-8329-8d82eecc46e9...4d00-fe71-4a75-b800-0a6c209781fe', 'e5bf0857-3c20-4ea5-a386-1ccc2b44e810', 'e85dc5f8-965c-45af-9ff0-b5d5e6ad36e8', ...]
+embeddings = [array([ 0.01679804,  0.01643548, -0.01002509, ...,  0.00236118,
+        0.0128643 , -0.00292143], shape=(3072,), dtyp...8518,  0.00998332, -0.01241033, ..., -0.02215326,
+        0.01178261, -0.01355788], shape=(3072,), dtype=float32), ...]
+metadatas = [{'source': 'C:\\Users\\2mrmi\\OneDrive\\Documents\\github-clone\\Agentic-AI-Readiness-Program\\phase2\\rag\\inventory...Users\\2mrmi\\OneDrive\\Documents\\github-clone\\Agentic-AI-Readiness-Program\\phase2\\rag\\inventory_manual.md'}, ...]
+documents = ['# Inventory Management &amp; Procurement Operations Manual\n## POC-07 — Retail Inventory Reference Guide\n\n### Section ...ed alerts remain stored in the audit log for historical reporting.\n\n### Section 5: Purchase Order (PO) Process', ...]
+uris = None, tenant = 'default_tenant', database = 'default_database'
+
+    @override
+    def _upsert(
+        self,
+        collection_id: UUID,
+        ids: IDs,
+        embeddings: Embeddings,
+        metadatas: Optional[Metadatas] = None,
+        documents: Optional[Documents] = None,
+        uris: Optional[URIs] = None,
+        tenant: str = DEFAULT_TENANT,
+        database: str = DEFAULT_DATABASE,
+    ) -&gt; bool:
+&gt;       return self.bindings.upsert(
+            str(collection_id),
+            ids,
+            embeddings,
+            metadatas,
+            documents,
+            uris,
+            tenant,
+            database,
+        )
+E       chromadb.errors.InvalidArgumentError: Collection expecting embedding with dimension of 768, got 3072
+
+phase1\venv\Lib\site-packages\chromadb\api\rust.py:541: InvalidArgumentError</failure></testcase><testcase classname="phase2.tests.test_phase2" name="test_ingest_file_not_found" time="0.001" /><testcase classname="phase2.tests.test_phase2" name="test_get_embeddings_branches" time="0.058"><failure message="pydantic_core._pydantic_core.ValidationError: 1 validation error for GoogleGenerativeAIEmbeddings&#10;  Value error, API key required for Gemini Developer API. Provide api_key parameter or set GOOGLE_API_KEY/GEMINI_API_KEY environment variable. [type=value_error, input_value={'model': 'models/gemini-embedding-2'}, input_type=dict]&#10;    For further information visit https://errors.pydantic.dev/2.13/v/value_error">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001E4A5489D50&gt;
+
+    def test_get_embeddings_branches(monkeypatch):
+        """Test get_embeddings with and without GOOGLE_API_KEY"""
+        from phase2.rag.ingest import get_embeddings
+        monkeypatch.setenv("GOOGLE_API_KEY", "fake_key_for_test")
+        emb = get_embeddings()
+        assert emb is not None
+    
+        monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+&gt;       emb_fake = get_embeddings()
+                   ^^^^^^^^^^^^^^^^
+
+phase2\tests\test_phase2.py:264: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def get_embeddings():
+        """Return embedding function (GoogleGenerativeAIEmbeddings)."""
+        from langchain_google_genai import GoogleGenerativeAIEmbeddings
+        logger.info("Initializing GoogleGenerativeAIEmbeddings (model: models/gemini-embedding-2)")
+&gt;       return GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-2")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for GoogleGenerativeAIEmbeddings
+E         Value error, API key required for Gemini Developer API. Provide api_key parameter or set GOOGLE_API_KEY/GEMINI_API_KEY environment variable. [type=value_error, input_value={'model': 'models/gemini-embedding-2'}, input_type=dict]
+E           For further information visit https://errors.pydantic.dev/2.13/v/value_error
+
+phase2\rag\ingest.py:69: ValidationError</failure></testcase><testcase classname="phase2.tests.test_phase2" name="test_build_rag_chain_with_google_key" time="0.123" /><testcase classname="phase2.tests.test_phase2" name="test_ingest_small_chunk_warning" time="0.002" /><testcase classname="phase2.tests.test_phase2" name="test_ingest_build_vectorstore_default" time="2.114"><failure message="chromadb.errors.InvalidArgumentError: Collection expecting embedding with dimension of 768, got 3072">def test_ingest_build_vectorstore_default():
+        """Test build_vectorstore with default chunks=None"""
+        from phase2.rag.ingest import build_vectorstore
+&gt;       v = build_vectorstore(chunks=None)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+phase2\tests\test_phase2.py:287: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+phase2\rag\ingest.py:85: in build_vectorstore
+    vectorstore = Chroma.from_documents(
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:887: in from_documents
+    return cls.from_texts(
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:843: in from_texts
+    chroma_collection.add_texts(
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:299: in add_texts
+    self._collection.upsert(
+phase1\venv\Lib\site-packages\chromadb\api\models\Collection.py:530: in upsert
+    self._client._upsert(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;chromadb.api.rust.RustBindingsAPI object at 0x000001E4A5559910&gt;
+collection_id = UUID('f8bef4ca-94ae-45a7-a51f-ac154bcc57bc')
+ids = ['d487aa02-7cb8-42d3-b5ec-a22d3dd39cf8', '2fc03e21-ce9a-4458-9bd0-cee92d5621b7', '8638d0c7-0058-4eca-be06-9c7912eac2e5...ed9b-5224-443d-b1ce-53c3a0848872', '578ce0fe-4e36-45c3-91d0-fe187af109cf', '20bad6bd-882a-4a83-abbc-c92624106045', ...]
+embeddings = [array([ 0.01679804,  0.01643548, -0.01002509, ...,  0.00236118,
+        0.0128643 , -0.00292143], shape=(3072,), dtyp...8518,  0.00998332, -0.01241033, ..., -0.02215326,
+        0.01178261, -0.01355788], shape=(3072,), dtype=float32), ...]
+metadatas = [{'source': 'C:\\Users\\2mrmi\\OneDrive\\Documents\\github-clone\\Agentic-AI-Readiness-Program\\phase2\\rag\\inventory...Users\\2mrmi\\OneDrive\\Documents\\github-clone\\Agentic-AI-Readiness-Program\\phase2\\rag\\inventory_manual.md'}, ...]
+documents = ['# Inventory Management &amp; Procurement Operations Manual\n## POC-07 — Retail Inventory Reference Guide\n\n### Section ...ed alerts remain stored in the audit log for historical reporting.\n\n### Section 5: Purchase Order (PO) Process', ...]
+uris = None, tenant = 'default_tenant', database = 'default_database'
+
+    @override
+    def _upsert(
+        self,
+        collection_id: UUID,
+        ids: IDs,
+        embeddings: Embeddings,
+        metadatas: Optional[Metadatas] = None,
+        documents: Optional[Documents] = None,
+        uris: Optional[URIs] = None,
+        tenant: str = DEFAULT_TENANT,
+        database: str = DEFAULT_DATABASE,
+    ) -&gt; bool:
+&gt;       return self.bindings.upsert(
+            str(collection_id),
+            ids,
+            embeddings,
+            metadatas,
+            documents,
+            uris,
+            tenant,
+            database,
+        )
+E       chromadb.errors.InvalidArgumentError: Collection expecting embedding with dimension of 768, got 3072
+
+phase1\venv\Lib\site-packages\chromadb\api\rust.py:541: InvalidArgumentError</failure></testcase><testcase classname="phase2.tests.test_phase2" name="test_vectorstore_alt_paths" time="0.071" /><testcase classname="phase2.tests.test_phase2" name="test_ask_question_chain_none" time="6.260"><failure message="chromadb.errors.InvalidArgumentError: Collection expecting embedding with dimension of 768, got 3072">def test_ask_question_chain_none():
+        """Test ask_question with chain=None parameter"""
+&gt;       res = ask_question("What is the SKU format?", chain=None)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+phase2\tests\test_phase2.py:300: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+phase2\rag\rag_chain.py:126: in ask_question
+    res = _run_query(question, chain)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langsmith\run_helpers.py:777: in wrapper
+    function_result = run_container["context"].run(
+phase2\rag\rag_chain.py:125: in _run_query
+    return c.invoke({"query": q})
+           ^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_classic\chains\base.py:167: in invoke
+    self._call(inputs, run_manager=run_manager)
+phase1\venv\Lib\site-packages\langchain_classic\chains\retrieval_qa\base.py:151: in _call
+    docs = self._get_docs(question, run_manager=_run_manager)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_classic\chains\retrieval_qa\base.py:275: in _get_docs
+    return self.retriever.invoke(
+phase1\venv\Lib\site-packages\langchain_core\retrievers.py:222: in invoke
+    result = self._get_relevant_documents(
+phase1\venv\Lib\site-packages\langchain_core\vectorstores\base.py:1045: in _get_relevant_documents
+    docs = self.vectorstore.similarity_search(query, **kwargs_)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:350: in similarity_search
+    docs_and_scores = self.similarity_search_with_score(
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:440: in similarity_search_with_score
+    results = self.__query_collection(
+phase1\venv\Lib\site-packages\langchain_core\utils\utils.py:51: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:157: in __query_collection
+    return self._collection.query(
+phase1\venv\Lib\site-packages\chromadb\api\models\Collection.py:265: in query
+    query_results = self._client._query(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;chromadb.api.rust.RustBindingsAPI object at 0x000001E4A5559910&gt;
+collection_id = UUID('f8bef4ca-94ae-45a7-a51f-ac154bcc57bc')
+query_embeddings = [array([-0.02345731,  0.0132951 ,  0.01269118, ..., -0.00097024,
+       -0.00995466,  0.00443101], shape=(3072,), dtype=float32)]
+ids = None, n_results = 4, where = None, where_document = None
+include = ['metadatas', 'documents', 'distances'], tenant = 'default_tenant'
+database = 'default_database'
+
+    @override
+    def _query(
+        self,
+        collection_id: UUID,
+        query_embeddings: Embeddings,
+        ids: Optional[IDs] = None,
+        n_results: int = 10,
+        where: Optional[Where] = None,
+        where_document: Optional[WhereDocument] = None,
+        include: Include = IncludeMetadataDocumentsDistances,
+        tenant: str = DEFAULT_TENANT,
+        database: str = DEFAULT_DATABASE,
+    ) -&gt; QueryResult:
+        query_amount = len(query_embeddings)
+        filtered_ids_amount = len(ids) if ids else 0
+        self.product_telemetry_client.capture(
+            CollectionQueryEvent(
+                collection_uuid=str(collection_id),
+                query_amount=query_amount,
+                filtered_ids_amount=filtered_ids_amount,
+                n_results=n_results,
+                with_metadata_filter=query_amount if where is not None else 0,
+                with_document_filter=query_amount if where_document is not None else 0,
+                include_metadatas=query_amount if "metadatas" in include else 0,
+                include_documents=query_amount if "documents" in include else 0,
+                include_uris=query_amount if "uris" in include else 0,
+                include_distances=query_amount if "distances" in include else 0,
+            )
+        )
+    
+&gt;       rust_response = self.bindings.query(
+            str(collection_id),
+            ids,
+            query_embeddings,
+            n_results,
+            json.dumps(where) if where else None,
+            json.dumps(where_document) if where_document else None,
+            include,
+            tenant,
+            database,
+        )
+E       chromadb.errors.InvalidArgumentError: Collection expecting embedding with dimension of 768, got 3072
+
+phase1\venv\Lib\site-packages\chromadb\api\rust.py:582: InvalidArgumentError</failure></testcase><testcase classname="phase2.tests.test_phase2" name="test_ask_question_exception_handling" time="0.003" /><testcase classname="phase2.tests.test_phase2" name="test_ingest_script_entrypoint" time="2.220"><failure message="chromadb.errors.InvalidArgumentError: Collection expecting embedding with dimension of 768, got 3072">def test_ingest_script_entrypoint():
+        """Test ingest.py __main__ entrypoint execution"""
+        import runpy
+&gt;       runpy.run_path("phase2/rag/ingest.py", run_name="__main__")
+
+phase2\tests\test_phase2.py:317: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+&lt;frozen runpy&gt;:291: in run_path
+    ???
+&lt;frozen runpy&gt;:98: in _run_module_code
+    ???
+&lt;frozen runpy&gt;:88: in _run_code
+    ???
+phase2\rag\ingest.py:105: in &lt;module&gt;
+    main()
+phase2\rag\ingest.py:100: in main
+    build_vectorstore(chunks=chunks)
+phase2\rag\ingest.py:85: in build_vectorstore
+    vectorstore = Chroma.from_documents(
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:887: in from_documents
+    return cls.from_texts(
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:843: in from_texts
+    chroma_collection.add_texts(
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:299: in add_texts
+    self._collection.upsert(
+phase1\venv\Lib\site-packages\chromadb\api\models\Collection.py:530: in upsert
+    self._client._upsert(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;chromadb.api.rust.RustBindingsAPI object at 0x000001E4A5559910&gt;
+collection_id = UUID('f8bef4ca-94ae-45a7-a51f-ac154bcc57bc')
+ids = ['721cbcf4-edf5-4759-ad22-0c7d29cb6c97', '2158f0d6-3153-45f7-82b2-e2be2909e22a', '2925c03e-4948-41a5-b79d-cac10c3e7fb6...b6cc-19bf-4b35-bbec-673af81d277d', '84508ce9-2e67-4222-b95a-d737d94573a6', '269d1b36-3738-458f-b2fd-6d247e8a12a2', ...]
+embeddings = [array([ 0.01679804,  0.01643548, -0.01002509, ...,  0.00236118,
+        0.0128643 , -0.00292143], shape=(3072,), dtyp...8518,  0.00998332, -0.01241033, ..., -0.02215326,
+        0.01178261, -0.01355788], shape=(3072,), dtype=float32), ...]
+metadatas = [{'source': 'C:\\Users\\2mrmi\\OneDrive\\Documents\\github-clone\\Agentic-AI-Readiness-Program\\phase2\\rag\\inventory...Users\\2mrmi\\OneDrive\\Documents\\github-clone\\Agentic-AI-Readiness-Program\\phase2\\rag\\inventory_manual.md'}, ...]
+documents = ['# Inventory Management &amp; Procurement Operations Manual\n## POC-07 — Retail Inventory Reference Guide\n\n### Section ...ed alerts remain stored in the audit log for historical reporting.\n\n### Section 5: Purchase Order (PO) Process', ...]
+uris = None, tenant = 'default_tenant', database = 'default_database'
+
+    @override
+    def _upsert(
+        self,
+        collection_id: UUID,
+        ids: IDs,
+        embeddings: Embeddings,
+        metadatas: Optional[Metadatas] = None,
+        documents: Optional[Documents] = None,
+        uris: Optional[URIs] = None,
+        tenant: str = DEFAULT_TENANT,
+        database: str = DEFAULT_DATABASE,
+    ) -&gt; bool:
+&gt;       return self.bindings.upsert(
+            str(collection_id),
+            ids,
+            embeddings,
+            metadatas,
+            documents,
+            uris,
+            tenant,
+            database,
+        )
+E       chromadb.errors.InvalidArgumentError: Collection expecting embedding with dimension of 768, got 3072
+
+phase1\venv\Lib\site-packages\chromadb\api\rust.py:541: InvalidArgumentError</failure></testcase><testcase classname="phase2.tests.test_phase2" name="test_get_embeddings_exception" time="0.044" /><testcase classname="phase2.tests.test_phase2" name="test_otel_exception_handling" time="0.728"><failure message="chromadb.errors.InvalidArgumentError: Collection expecting embedding with dimension of 768, got 3072">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001E4A58B45D0&gt;
+
+    def test_otel_exception_handling(monkeypatch):
+        """Test opentelemetry exception block in ask_question"""
+        import sys
+        monkeypatch.setitem(sys.modules, "opentelemetry", None)
+&gt;       res = ask_question("What is SKU?")
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+phase2\tests\test_phase2.py:338: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+phase2\rag\rag_chain.py:126: in ask_question
+    res = _run_query(question, chain)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langsmith\run_helpers.py:777: in wrapper
+    function_result = run_container["context"].run(
+phase2\rag\rag_chain.py:125: in _run_query
+    return c.invoke({"query": q})
+           ^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_classic\chains\base.py:167: in invoke
+    self._call(inputs, run_manager=run_manager)
+phase1\venv\Lib\site-packages\langchain_classic\chains\retrieval_qa\base.py:151: in _call
+    docs = self._get_docs(question, run_manager=_run_manager)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_classic\chains\retrieval_qa\base.py:275: in _get_docs
+    return self.retriever.invoke(
+phase1\venv\Lib\site-packages\langchain_core\retrievers.py:222: in invoke
+    result = self._get_relevant_documents(
+phase1\venv\Lib\site-packages\langchain_core\vectorstores\base.py:1045: in _get_relevant_documents
+    docs = self.vectorstore.similarity_search(query, **kwargs_)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:350: in similarity_search
+    docs_and_scores = self.similarity_search_with_score(
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:440: in similarity_search_with_score
+    results = self.__query_collection(
+phase1\venv\Lib\site-packages\langchain_core\utils\utils.py:51: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+phase1\venv\Lib\site-packages\langchain_community\vectorstores\chroma.py:157: in __query_collection
+    return self._collection.query(
+phase1\venv\Lib\site-packages\chromadb\api\models\Collection.py:265: in query
+    query_results = self._client._query(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;chromadb.api.rust.RustBindingsAPI object at 0x000001E4A5559910&gt;
+collection_id = UUID('f8bef4ca-94ae-45a7-a51f-ac154bcc57bc')
+query_embeddings = [array([-0.00876106,  0.01942922, -0.00420726, ..., -0.02270697,
+       -0.00338398, -0.00681917], shape=(3072,), dtype=float32)]
+ids = None, n_results = 4, where = None, where_document = None
+include = ['metadatas', 'documents', 'distances'], tenant = 'default_tenant'
+database = 'default_database'
+
+    @override
+    def _query(
+        self,
+        collection_id: UUID,
+        query_embeddings: Embeddings,
+        ids: Optional[IDs] = None,
+        n_results: int = 10,
+        where: Optional[Where] = None,
+        where_document: Optional[WhereDocument] = None,
+        include: Include = IncludeMetadataDocumentsDistances,
+        tenant: str = DEFAULT_TENANT,
+        database: str = DEFAULT_DATABASE,
+    ) -&gt; QueryResult:
+        query_amount = len(query_embeddings)
+        filtered_ids_amount = len(ids) if ids else 0
+        self.product_telemetry_client.capture(
+            CollectionQueryEvent(
+                collection_uuid=str(collection_id),
+                query_amount=query_amount,
+                filtered_ids_amount=filtered_ids_amount,
+                n_results=n_results,
+                with_metadata_filter=query_amount if where is not None else 0,
+                with_document_filter=query_amount if where_document is not None else 0,
+                include_metadatas=query_amount if "metadatas" in include else 0,
+                include_documents=query_amount if "documents" in include else 0,
+                include_uris=query_amount if "uris" in include else 0,
+                include_distances=query_amount if "distances" in include else 0,
+            )
+        )
+    
+&gt;       rust_response = self.bindings.query(
+            str(collection_id),
+            ids,
+            query_embeddings,
+            n_results,
+            json.dumps(where) if where else None,
+            json.dumps(where_document) if where_document else None,
+            include,
+            tenant,
+            database,
+        )
+E       chromadb.errors.InvalidArgumentError: Collection expecting embedding with dimension of 768, got 3072
+
+phase1\venv\Lib\site-packages\chromadb\api\rust.py:582: InvalidArgumentError</failure></testcase></testsuite></testsuites>

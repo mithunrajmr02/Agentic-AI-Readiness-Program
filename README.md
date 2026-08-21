@@ -119,57 +119,47 @@ Located in [`phase3/agent/`](file:///c:/Users/2mrmi/OneDrive/Documents/github-cl
 . .\phase1\venv\Scripts\Activate.ps1
 
 # Configure Environment Variables (.env)
+DATABASE_URL=sqlite:///./inventory.db
 GOOGLE_API_KEY=your_google_ai_studio_key
-GEMINI_CHAT_MODEL=gemini-2.5-flash-lite
+GEMINI_API_KEY=your_google_ai_studio_key
+GEMINI_CHAT_MODEL=gemini-1.5-flash
 GEMINI_EMBEDDING_MODEL=models/gemini-embedding-2
 ```
 
-### 2. Start Phase 1 REST API Backend
-```powershell
-cd phase1
-python -m app.main
-# Server runs on: http://127.0.0.1:8000
-# OpenAPI Docs at: http://127.0.0.1:8000/docs
-```
+### 2. Quick Execution Commands (Unified `src/` Architecture)
 
-### 3. Start Phase 2 RAG Streamlit App or CLI Verification
-```powershell
-cd phase2
-# CLI Verification:
-python verify_rag.py
+> 📖 **Comprehensive Step-by-Step Guide:** For complete operational instructions, see [RUN_GUIDE.md](file:///c:/Users/2mrmi/OneDrive/Documents/github-clone/Agentic-AI-Readiness-Program/RUN_GUIDE.md).
 
-# Interactive Streamlit Web UI:
-streamlit run rag/app.py
-```
+```bash
+# 🟢 Start FastAPI Backend REST API
+uvicorn src.backend.main:app --reload --port 8000
+# (Docs at: http://127.0.0.1:8000/docs)
 
-### 4. Run Phase 3 ReAct Agent CLI
-```powershell
-cd phase3
-python run_agent.py
-```
+# 📚 Run RAG Ingestion Pipeline (ChromaDB)
+python -m src.rag.ingest
 
-### 5. Execute Test Suites & Quality Analysis
-```powershell
-# Phase 1 Test Suite (20/20 Passing)
-cd phase1
-pytest tests/ -v --cov=app
+# 💬 Launch Streamlit AI Knowledge Assistant
+streamlit run src/ui/chat_streamlit/app.py
 
-# Phase 2 Test Suite
-cd phase2
-pytest tests/ -v
+# 🤖 Execute LangChain ReAct Agent (CLI)
+python -m src.agents.agent "Check stock for SKU-GRO-0001"
 
-# Phase 3 Test Suite (21/21 Passing, 91.0% Coverage)
-cd phase3
-pytest tests/ -v --cov=agent --cov-report=term-missing
+# 💻 Launch React Frontend Dashboard
+cd src/ui/web_react && npm run dev
 
-# Run SonarQube Scanner (Port 9001)
-npx.cmd sonar-scanner "-Dsonar.host.url=http://localhost:9001" "-Dsonar.projectKey=POC-07-Inventory-Phase3" "-Dsonar.login=YOUR_TOKEN"
+# 🧪 Run Unified Multi-Phase Test Suite
+python verify_all_phases.py
+
+# 🐳 Run with Docker Compose
+docker-compose up -d
 ```
 
 ---
 
 ## 📊 Quality & Compliance Evidence
-- **Phase 1 Quality Gate**: Passed (20/20 tests passed, full CRUD integrity).
-- **Phase 2 Quality Gate**: Passed (RAG ChromaDB embeddings verified).
-- **Phase 3 Quality Gate**: Passed (21/21 tests passed, 91.0% code coverage, 0 Bugs, 0 Vulnerabilities, 0 Code Smells).
+- **Phase 1 Quality Gate**: Passed (44/44 tests passed, full CRUD integrity).
+- **Phase 2 Quality Gate**: Passed (32/32 tests passed, RAG ChromaDB embeddings verified).
+- **Phase 3 Quality Gate**: Passed (21/21 tests passed, 91.0%+ code coverage, 0 Bugs, 0 Vulnerabilities, 0 Code Smells).
+- **Multi-Phase Verification**: 100% Passed via `python verify_all_phases.py`.
 - **SonarQube Evidence**: Verified on `http://localhost:9001/dashboard?id=POC-07-Inventory-Phase3`.
+
