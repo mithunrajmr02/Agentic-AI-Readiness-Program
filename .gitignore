@@ -44,5 +44,6 @@ Thumbs.db
 # Scanner & Temporary Files
 .scannerwork/
 **/.scannerwork/
+scratch/
 test_output.txt
 Login.txt

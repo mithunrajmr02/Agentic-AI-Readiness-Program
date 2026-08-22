@@ -22,7 +22,8 @@ def main():
     phases = [
         ("phase1/tests/", "Phase 1 (FastAPI Backend)"),
         ("phase2/tests/", "Phase 2 (RAG & ChromaDB)"),
-        ("phase3/tests/", "Phase 3 (LangChain ReAct Agent)")
+        ("phase3/tests/", "Phase 3 (LangChain ReAct Agent)"),
+        ("phase4/tests/", "Phase 4 (FastMCP Server & Chat)")
     ]
     
     results = {}
@@ -34,7 +35,7 @@ def main():
             results[name] = False
             
     print(f"\n{'='*60}")
-    print("📊 Verification Summary")
+    print("=== Verification Summary ===")
     print(f"{'='*60}")
     all_passed = True
     for name, passed in results.items():
