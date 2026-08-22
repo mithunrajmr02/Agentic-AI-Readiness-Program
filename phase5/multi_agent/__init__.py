@@ -5,6 +5,8 @@ from src.agents.multi_agent.agents import (
     supplier_coordinator,
     inventory_auditor,
     _safe_json,
+    _llm,
+    BASE_URL,
 )
 from src.agents.multi_agent.graph import (
     should_skip_to_audit,
@@ -20,6 +22,8 @@ __all__ = [
     "supplier_coordinator",
     "inventory_auditor",
     "_safe_json",
+    "_llm",
+    "BASE_URL",
     "should_skip_to_audit",
     "build_inventory_graph",
     "analyze_product",

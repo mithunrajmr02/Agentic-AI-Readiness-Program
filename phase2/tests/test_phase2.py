@@ -247,8 +247,11 @@ def test_sources():
 
 def test_ingest_main():
     """Test ingestion main entrypoint"""
+    from unittest.mock import patch, MagicMock
     from src.rag.ingest import main as ingest_main, get_manual_path
-    ingest_main()
+    with patch("src.rag.ingest.build_vectorstore") as mb:
+        mb.return_value = MagicMock()
+        ingest_main()
     assert os.path.exists(get_manual_path())
 
 

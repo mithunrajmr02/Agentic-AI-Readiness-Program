@@ -156,5 +156,8 @@ def process_message(message: str, session_id: str = "default") -> dict:
         output = result.get("output", "") if isinstance(result, dict) else str(result)
         return {"output": output, "session_id": session_id}
     except Exception as e:
-        logger.error("chat_error", poc_id="POC-07", phase="P4", error=str(e))
+        try:
+            logger.error("chat_error", poc_id="POC-07", phase="P4", error=str(e))
+        except Exception:
+            pass
         return {"output": f"Error: {str(e)}", "session_id": session_id}

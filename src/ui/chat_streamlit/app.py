@@ -1,7 +1,27 @@
 import os
 import sys
 import uuid
+import json
 import requests
+import structlog
+
+class _SafeWriter:
+    def write(self, s):
+        try:
+            if hasattr(sys, "__stdout__") and sys.__stdout__:
+                sys.__stdout__.write(s)
+        except Exception:
+            pass
+    def flush(self):
+        pass
+
+try:
+    structlog.configure(
+        logger_factory=structlog.PrintLoggerFactory(file=_SafeWriter()),
+        cache_logger_on_first_use=False
+    )
+except Exception:
+    pass
 
 # Ensure repository root is on sys.path
 repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
@@ -11,6 +31,7 @@ if repo_root not in sys.path:
 import streamlit as st
 from src.rag.rag_chain import build_rag_chain, ask_question
 from src.mcp_server.chat_interface import process_message, ChatSession, build_chat_executor
+from src.agents.multi_agent.graph import analyze_product
 
 # Page Configuration
 st.set_page_config(
@@ -39,6 +60,9 @@ if "rag_messages" not in st.session_state:
         }
     ]
 
+if "multi_agent_result" not in st.session_state:
+    st.session_state["multi_agent_result"] = None
+
 # Backend Health Check
 api_base = os.getenv("API_BASE_URL", "http://localhost:8000/api/v1")
 backend_online = False
@@ -53,18 +77,18 @@ with st.sidebar:
     st.title("📦 System Metadata")
     st.markdown("**Program:** AI Readiness Training Program")
     st.markdown("**POC:** POC-07 — Inventory & Procurement")
-    st.markdown("**Active Phases:** Phase 2 (RAG) & Phase 4 (FastMCP Chat)")
+    st.markdown("**Active Phases:** Phase 2 (RAG), Phase 4 (FastMCP), Phase 5 (LangGraph Multi-Agent)")
     st.markdown("---")
     
     st.subheader("🔌 Connection Status")
     if backend_online:
         st.success("🟢 FastAPI Backend: Connected (`localhost:8000`)")
     else:
-        st.warning("🟡 FastAPI Backend: Offline / Standalone Mock Mode")
+        st.warning("🟡 FastAPI Backend: Offline / Mock Fallback")
     
     st.markdown("- **MCP Server:** FastMCP ('Inventory Management Server')")
-    st.markdown("- **Registered Tools:** 6 Tools Active")
-    st.markdown("- **Observability:** LangSmith (`AI-Readiness-POC-07-P4`)")
+    st.markdown("- **Multi-Agent Engine:** LangGraph (`StateGraph`)")
+    st.markdown("- **Observability:** LangSmith (`AI-Readiness-POC-07-P5`)")
     st.markdown(f"- **Session ID:** `{st.session_state['session_id']}`")
     st.markdown("---")
     
@@ -82,13 +106,18 @@ with st.sidebar:
                 "content": "📚 RAG Conversation reset! What would you like to know from the inventory manual?"
             }
         ]
+        st.session_state["multi_agent_result"] = None
         st.rerun()
 
 st.title("📦 Retail Inventory Management & Operations Platform")
-st.caption("Integrated FastMCP Agentic Assistant and ChromaDB Vector RAG System")
+st.caption("Integrated FastMCP Agentic Assistant, ChromaDB Vector RAG, and LangGraph Multi-Agent Orchestrator")
 
 # Tab Navigation
-tab_mcp, tab_rag = st.tabs(["🤖 Operations Chat Agent (Phase 4 MCP)", "📖 Inventory Manual & SOPs (Phase 2 RAG)"])
+tab_mcp, tab_rag, tab_multi = st.tabs([
+    "🤖 Operations Chat Agent (Phase 4 MCP)",
+    "📖 Inventory Manual & SOPs (Phase 2 RAG)",
+    "🕸️ Multi-Agent Orchestrator (Phase 5 LangGraph)"
+])
 
 # ----------------------------------------------------
 # TAB 1: Phase 4 FastMCP Operations Chat Agent
@@ -187,3 +216,71 @@ with tab_rag:
                     "content": answer,
                     "sources": sources
                 })
+
+# ----------------------------------------------------
+# TAB 3: Phase 5 Multi-Agent Orchestrator (LangGraph)
+# ----------------------------------------------------
+with tab_multi:
+    st.subheader("🕸️ Autonomous Multi-Agent Pipeline (LangGraph)")
+    st.markdown("Execute the four-agent autonomous pipeline to audit inventory, forecast velocity, recommend replenishment, quote suppliers, and generate an executive report.")
+
+    col_input, col_action = st.columns([3, 1])
+    with col_input:
+        target_product_id = st.number_input("Select Product ID for End-to-End Analysis:", min_value=1, max_value=100, value=1, step=1)
+    with col_action:
+        st.write("")
+        st.write("")
+        run_analysis = st.button("🚀 Run Multi-Agent Audit", use_container_width=True, type="primary")
+
+    if run_analysis:
+        with st.spinner(f"Executing LangGraph pipeline for Product #{target_product_id}..."):
+            try:
+                res = analyze_product(target_product_id)
+                st.session_state["multi_agent_result"] = res
+            except Exception as e:
+                st.error(f"Multi-Agent execution failed: {e}")
+
+    res = st.session_state.get("multi_agent_result")
+    if res:
+        st.success(f"✅ Pipeline Completed with Status: **{res.get('analysis_status', 'complete').upper()}**")
+        
+        # Overview KPI Cards
+        p_data = res.get("product_data", {})
+        d_forecast = res.get("demand_forecast", {})
+        r_rec = res.get("reorder_recommendation", {})
+        s_quote = res.get("supplier_quote", {})
+        stock = p_data.get("stock_level", {}) if isinstance(p_data.get("stock_level"), dict) else {}
+
+        kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+        kpi1.metric("SKU / Product", f"{p_data.get('sku', 'SKU-001')}", p_data.get("name", "Product"))
+        kpi2.metric("Available Stock", f"{stock.get('quantity_available', 0)} units", f"Reorder Pt: {p_data.get('reorder_point', 0)}")
+        kpi3.metric("Stockout Risk", f"{str(d_forecast.get('stockout_risk', 'unknown')).upper()}", f"{d_forecast.get('days_of_stock_remaining', 0)} days runway")
+        kpi4.metric("Reorder Urgency", f"{str(r_rec.get('urgency', 'None')).replace('_', ' ').title()}", f"{r_rec.get('recommended_quantity', 0)} units")
+
+        st.markdown("---")
+        
+        # 4 Agent Outputs in Tabs / Accordions
+        a1, a2, a3 = st.columns(3)
+        with a1:
+            st.markdown("#### 1️⃣ Demand Forecaster")
+            st.json(d_forecast)
+        with a2:
+            st.markdown("#### 2️⃣ Reorder Agent")
+            st.json(r_rec)
+        with a3:
+            st.markdown("#### 3️⃣ Supplier Coordinator")
+            st.json(s_quote)
+
+        st.markdown("#### 4️⃣ Inventory Auditor Executive Report")
+        st.info(res.get("audit_report", "No report available."))
+
+        with st.expander("📜 View Agent Execution Message Trail & State"):
+            st.write("##### Step-by-Step Message Trail:")
+            for m in res.get("messages", []):
+                st.markdown(f"- `{m}`")
+            if res.get("errors"):
+                st.write("##### Error Log Trail:")
+                for err in res.get("errors", []):
+                    st.error(err)
+            st.write("##### Full State Payload:")
+            st.json(res)
