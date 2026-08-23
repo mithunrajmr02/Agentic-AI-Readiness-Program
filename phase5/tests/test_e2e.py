@@ -21,7 +21,7 @@ def test_full_pipeline(sample_product_data):
     with patch("multi_agent.agents.requests.get") as mg, patch("multi_agent.agents._llm") as ml:
         mg.return_value.status_code = 200
         mg.return_value.json.return_value = sample_product_data
-        ml.return_value.invoke.side_effect = side
+        ml.invoke.side_effect = side
         from multi_agent.graph import analyze_product
         try:
             result = analyze_product(product_id=1)
@@ -48,7 +48,7 @@ def test_audit_non_empty(sample_product_data):
     with patch("multi_agent.agents.requests.get") as mg, patch("multi_agent.agents._llm") as ml:
         mg.return_value.status_code = 200
         mg.return_value.json.return_value = sample_product_data
-        ml.return_value.invoke.side_effect = side
+        ml.invoke.side_effect = side
         from multi_agent.graph import analyze_product
         result = analyze_product(product_id=1)
         assert len(result.get("audit_report", "")) > 20
@@ -72,7 +72,7 @@ def test_four_messages(sample_product_data):
     with patch("multi_agent.agents.requests.get") as mg, patch("multi_agent.agents._llm") as ml:
         mg.return_value.status_code = 200
         mg.return_value.json.return_value = sample_product_data
-        ml.return_value.invoke.side_effect = side
+        ml.invoke.side_effect = side
         from multi_agent.graph import analyze_product
         result = analyze_product(product_id=1)
         assert len(result.get("messages", [])) >= 4
@@ -96,7 +96,7 @@ def test_terminal_status(sample_product_data):
     with patch("multi_agent.agents.requests.get") as mg, patch("multi_agent.agents._llm") as ml:
         mg.return_value.status_code = 200
         mg.return_value.json.return_value = sample_product_data
-        ml.return_value.invoke.side_effect = side
+        ml.invoke.side_effect = side
         from multi_agent.graph import analyze_product
         result = analyze_product(product_id=1)
         assert result["analysis_status"] in ("complete", "reorder_required", "healthy", "analyzing")
@@ -133,7 +133,7 @@ def test_api_failure():
 
     with patch("multi_agent.agents.requests.get", side_effect=Exception("API down")), \
          patch("multi_agent.agents._llm") as ml:
-        ml.return_value.invoke.side_effect = side
+        ml.invoke.side_effect = side
         from multi_agent.graph import analyze_product
         try:
             result = analyze_product(product_id=1)
@@ -160,7 +160,7 @@ def test_urgent_reorder(sample_product_data):
     with patch("multi_agent.agents.requests.get") as mg, patch("multi_agent.agents._llm") as ml:
         mg.return_value.status_code = 200
         mg.return_value.json.return_value = sample_product_data
-        ml.return_value.invoke.side_effect = side
+        ml.invoke.side_effect = side
         from multi_agent.graph import analyze_product
         result = analyze_product(product_id=1)
         if result.get("reorder_recommendation", {}).get("reorder_required"):

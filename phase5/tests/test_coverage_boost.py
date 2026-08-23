@@ -53,13 +53,24 @@ def test_safe_json_variations():
 
 
 def test_invoke_llm_direct():
-    """Test _invoke_llm fallback and standard invocation."""
+    """_invoke_llm passes the prompt to `_llm.invoke` and returns the response.
+
+    There is no longer a "fallback" path to test: `_invoke_llm` used to branch on
+    `hasattr(_llm, "return_value")` -- a unittest.mock attribute -- so production
+    behaviour depended on whether a test was running. The prompt assertion below
+    is what that branch made impossible to check.
+    """
     mock_res = MagicMock()
     mock_res.content = "standard response"
     with patch("src.agents.multi_agent.agents._llm") as ml:
-        ml.return_value.invoke.return_value = mock_res
+        ml.invoke.return_value = mock_res
         res = _invoke_llm("test prompt")
         assert res.content == "standard response"
+        # The prompt actually reaches the model, wrapped in a single HumanMessage.
+        ml.invoke.assert_called_once()
+        (messages,), _ = ml.invoke.call_args
+        assert len(messages) == 1
+        assert messages[0].content == "test prompt"
 
 
 def test_safe_log_resilience():
@@ -75,7 +86,7 @@ def test_demand_forecaster_llm_exception(sample_product_data):
     with patch("multi_agent.agents.requests.get") as mg, patch("multi_agent.agents._llm") as ml:
         mg.return_value.status_code = 200
         mg.return_value.json.return_value = sample_product_data
-        ml.return_value.invoke.side_effect = Exception("Demand LLM timeout")
+        ml.invoke.side_effect = Exception("Demand LLM timeout")
         result = demand_forecaster(s)
         assert len(result["errors"]) > 0
         assert "Demand LLM error" in result["errors"][-1]
@@ -85,7 +96,7 @@ def test_reorder_agent_llm_exception():
     """Test reorder_agent handles LLM exceptions gracefully without crashing."""
     s = initial_state(1)
     with patch("multi_agent.agents._llm") as ml:
-        ml.return_value.invoke.side_effect = Exception("LLM connection timeout")
+        ml.invoke.side_effect = Exception("LLM connection timeout")
         result = reorder_agent(s)
         assert len(result["errors"]) > 0
         assert result["reorder_recommendation"]["reorder_required"] is False
@@ -97,7 +108,7 @@ def test_supplier_coordinator_api_error_and_llm_exception():
     s = {**initial_state(1), "product_data": {"supplier_id": 99}}
     with patch("multi_agent.agents.requests.get", side_effect=Exception("Supplier API timeout")), \
          patch("multi_agent.agents._llm") as ml:
-        ml.return_value.invoke.side_effect = Exception("LLM error")
+        ml.invoke.side_effect = Exception("LLM error")
         result = supplier_coordinator(s)
         assert len(result["errors"]) >= 2
         assert result["supplier_quote"]["supplier_id"] == 99
@@ -107,7 +118,7 @@ def test_supplier_coordinator_without_supplier_id():
     """Test supplier_coordinator when product_data has no supplier_id."""
     s = {**initial_state(1), "product_data": {}}
     with patch("multi_agent.agents._llm") as ml:
-        ml.return_value.invoke.return_value = MagicMock(
+        ml.invoke.return_value = MagicMock(
             content='{"supplier_id": null, "quoted_unit_cost": 0, "total_order_cost": 0, "estimated_lead_time_days": 7, "quote_notes": "None"}'
         )
         result = supplier_coordinator(s)
@@ -118,7 +129,7 @@ def test_inventory_auditor_llm_exception():
     """Test inventory_auditor handles LLM failure and populates error report."""
     s = initial_state(1)
     with patch("multi_agent.agents._llm") as ml:
-        ml.return_value.invoke.side_effect = Exception("Audit LLM failure")
+        ml.invoke.side_effect = Exception("Audit LLM failure")
         result = inventory_auditor(s)
         assert "Audit error" in result["audit_report"]
         assert result["analysis_status"] == "complete"

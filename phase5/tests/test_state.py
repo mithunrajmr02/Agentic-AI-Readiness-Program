@@ -34,7 +34,7 @@ def test_no_mutation(state_with_data, sample_product_data):
          patch("multi_agent.agents._llm") as ml:
         mg.return_value.status_code = 200
         mg.return_value.json.return_value = sample_product_data
-        ml.return_value.invoke.return_value = MagicMock(
+        ml.invoke.return_value = MagicMock(
             content='{"avg_daily_demand":4.0,"demand_trend":"stable","days_of_stock_remaining":3,"stockout_risk":"high","forecast_notes":"Low stock."}'
         )
         from multi_agent.agents import demand_forecaster

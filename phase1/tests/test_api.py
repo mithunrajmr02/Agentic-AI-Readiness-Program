@@ -112,6 +112,87 @@ def test_create_po_invalid_supplier(client, auth_headers, seeded_product):
     response = client.post("/api/v1/orders", json=payload, headers=auth_headers)
     assert response.status_code == 400
 
+def test_create_po_unknown_product_is_rejected_cleanly(client, auth_headers, seeded_supplier):
+    """An order for a product that does not exist must be a 400, not a 500.
+
+    Measured against the running app before this was fixed: `product_id: 999999`
+    returned HTTP 500 `{"detail": "Internal server error"}`, because the only thing
+    standing between the request and the database was SQLite's own
+    `FOREIGN KEY constraint failed`. The row was never written -- the constraint
+    held -- but the caller was told the server had broken rather than which field
+    was wrong, and a 500 is not something a client can safely retry or surface.
+    The supplier_id on the very same endpoint already answered a clean 400.
+    """
+    payload = {
+        "supplier_id": seeded_supplier["id"],
+        "order_date": "2026-06-18",
+        "items": [{"product_id": 999999, "quantity_ordered": 5, "unit_cost": 100.0}],
+    }
+    response = client.post("/api/v1/orders", json=payload, headers=auth_headers)
+
+    assert response.status_code == 400, f"expected 400, got {response.status_code}"
+    assert "999999" in response.json()["detail"]
+    # And no partial order is left behind.
+    assert client.get("/api/v1/orders", headers=auth_headers).json() == []
+
+def test_create_po_reports_every_unknown_product(client, auth_headers, seeded_supplier, seeded_product):
+    """All missing ids are named at once, and a valid line is not blamed.
+
+    Reporting only the first would make a client fixing a ten-line order resubmit
+    once per bad id to discover them all.
+    """
+    payload = {
+        "supplier_id": seeded_supplier["id"],
+        "order_date": "2026-06-18",
+        "items": [
+            {"product_id": seeded_product["id"], "quantity_ordered": 1, "unit_cost": 10.0},
+            {"product_id": 777777, "quantity_ordered": 1, "unit_cost": 10.0},
+            {"product_id": 888888, "quantity_ordered": 1, "unit_cost": 10.0},
+        ],
+    }
+    response = client.post("/api/v1/orders", json=payload, headers=auth_headers)
+
+    assert response.status_code == 400
+    detail = response.json()["detail"]
+    assert "777777" in detail and "888888" in detail
+    assert str(seeded_product["id"]) not in detail
+
+def test_create_product_unknown_supplier_is_rejected_cleanly(client, auth_headers):
+    """Same defect, same shape, on the other endpoint that accepts a foreign key.
+
+    `POST /products` with `supplier_id: 777777` also returned HTTP 500 from the
+    foreign-key constraint.
+    """
+    payload = {
+        "name": "Orphan Product",
+        "category": "grocery",
+        "unit_price": 10.0,
+        "cost_price": 5.0,
+        "supplier_id": 777777,
+    }
+    response = client.post("/api/v1/products", json=payload, headers=auth_headers)
+
+    assert response.status_code == 400, f"expected 400, got {response.status_code}"
+    assert "777777" in response.json()["detail"]
+    assert client.get("/api/v1/products", headers=auth_headers).json() == []
+
+def test_create_product_without_a_supplier_is_still_allowed(client, auth_headers):
+    """supplier_id stays optional -- the new check must not reject its absence.
+
+    A product can legitimately be stocked before its supplier is on file, and the
+    column is nullable. This is the guard against fixing the 500 by over-validating.
+    """
+    payload = {
+        "name": "Unsourced Product",
+        "category": "household",
+        "unit_price": 10.0,
+        "cost_price": 5.0,
+    }
+    response = client.post("/api/v1/products", json=payload, headers=auth_headers)
+
+    assert response.status_code == 201
+    assert response.json()["supplier_id"] is None
+
 def test_get_order_by_id_and_not_found(client, auth_headers, submitted_po):
     res1 = client.get(f"/api/v1/orders/{submitted_po}", headers=auth_headers)
     assert res1.status_code == 200

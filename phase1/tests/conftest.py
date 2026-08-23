@@ -53,8 +53,33 @@ def client(db_session):
         yield test_client
 
 @pytest.fixture
-def auth_headers():
-    return {"Authorization": "Bearer test_token"}
+def auth_headers(db_session):
+    """A real signed JWT for a real manager row in the test database.
+
+    This used to return `{"Authorization": "Bearer test_token"}` -- a literal the
+    production `get_current_user` special-cased into "return the admin account".
+    That made every API test in this suite exercise a code path that only existed
+    for the tests, and it meant the suite could not have detected that the same
+    function served *unauthenticated* requests as a manager. Minting a genuine
+    token instead means these tests now prove the real authentication path works,
+    and the backdoor no longer has a consumer keeping it alive.
+    """
+    from src.backend.models import User
+    from src.backend.routers.auth import create_access_token, get_password_hash
+
+    email = "test-manager@retail.com"
+    user = db_session.query(User).filter(User.email == email).first()
+    if not user:
+        user = User(
+            email=email,
+            hashed_password=get_password_hash("test-password"),
+            full_name="Test Manager",
+            role="manager",
+        )
+        db_session.add(user)
+        db_session.commit()
+
+    return {"Authorization": f"Bearer {create_access_token(data={'sub': email, 'role': 'manager'})}"}
 
 @pytest.fixture
 def seeded_supplier(client, auth_headers):

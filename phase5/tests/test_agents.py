@@ -9,7 +9,7 @@ def test_demand_fetches(sample_product_data):
     with patch("multi_agent.agents.requests.get") as mg, patch("multi_agent.agents._llm") as ml:
         mg.return_value.status_code = 200
         mg.return_value.json.return_value = sample_product_data
-        ml.return_value.invoke.return_value = MagicMock(
+        ml.invoke.return_value = MagicMock(
             content='{"avg_daily_demand":4.0,"demand_trend":"stable","days_of_stock_remaining":3,"stockout_risk":"high","forecast_notes":"Low."}'
         )
         from multi_agent.agents import demand_forecaster
@@ -23,7 +23,7 @@ def test_demand_api_error():
     s = initial_state(999)
     with patch("multi_agent.agents.requests.get", side_effect=Exception("down")), \
          patch("multi_agent.agents._llm") as ml:
-        ml.return_value.invoke.return_value = MagicMock(
+        ml.invoke.return_value = MagicMock(
             content='{"avg_daily_demand":0,"demand_trend":"unknown","days_of_stock_remaining":0,"stockout_risk":"unknown","forecast_notes":"Error."}'
         )
         from multi_agent.agents import demand_forecaster
@@ -37,7 +37,7 @@ def test_forecast_fields(sample_product_data):
     with patch("multi_agent.agents.requests.get") as mg, patch("multi_agent.agents._llm") as ml:
         mg.return_value.status_code = 200
         mg.return_value.json.return_value = sample_product_data
-        ml.return_value.invoke.return_value = MagicMock(
+        ml.invoke.return_value = MagicMock(
             content='{"avg_daily_demand":4.0,"demand_trend":"stable","days_of_stock_remaining":3,"stockout_risk":"high","forecast_notes":"High risk."}'
         )
         from multi_agent.agents import demand_forecaster
@@ -49,7 +49,7 @@ def test_forecast_fields(sample_product_data):
 def test_reorder_recommends(state_after_forecast):
     """TC-07-P5-AGENT-04: Reorder Agent Recommends for High Risk"""
     with patch("multi_agent.agents._llm") as ml:
-        ml.return_value.invoke.return_value = MagicMock(
+        ml.invoke.return_value = MagicMock(
             content='{"reorder_required":true,"recommended_quantity":100,"urgency":"within_3_days","reason":"Stockout risk high."}'
         )
         from multi_agent.agents import reorder_agent
@@ -71,7 +71,7 @@ def test_reorder_no_action():
         }
     }
     with patch("multi_agent.agents._llm") as ml:
-        ml.return_value.invoke.return_value = MagicMock(
+        ml.invoke.return_value = MagicMock(
             content='{"reorder_required":false,"recommended_quantity":0,"urgency":"not_required","reason":"Ample stock."}'
         )
         from multi_agent.agents import reorder_agent
@@ -85,7 +85,7 @@ def test_supplier_quote(state_after_reorder):
     with patch("multi_agent.agents.requests.get") as mg, patch("multi_agent.agents._llm") as ml:
         mg.return_value.status_code = 200
         mg.return_value.json.return_value = catalog
-        ml.return_value.invoke.return_value = MagicMock(
+        ml.invoke.return_value = MagicMock(
             content='{"supplier_id":1,"quoted_unit_cost":280.0,"total_order_cost":28000.0,"estimated_lead_time_days":7,"quote_notes":"Standard rate."}'
         )
         from multi_agent.agents import supplier_coordinator
@@ -96,7 +96,7 @@ def test_supplier_quote(state_after_reorder):
 def test_auditor_generates(state_after_reorder):
     """TC-07-P5-AGENT-07: Inventory Auditor Generates Report"""
     with patch("multi_agent.agents._llm") as ml:
-        ml.return_value.invoke.return_value = MagicMock(
+        ml.invoke.return_value = MagicMock(
             content="SKU-GRO-0001 Basmati Rice has 12 units available against a reorder point of 20. Stockout expected in 3 days. Reorder of 100 units from supplier 1 is recommended at ₹28,000 total."
         )
         from multi_agent.agents import inventory_auditor
@@ -111,7 +111,7 @@ def test_all_append_messages(state_with_data, sample_product_data):
     with patch("multi_agent.agents.requests.get") as mg, patch("multi_agent.agents._llm") as ml:
         mg.return_value.status_code = 200
         mg.return_value.json.return_value = sample_product_data
-        ml.return_value.invoke.return_value = MagicMock(
+        ml.invoke.return_value = MagicMock(
             content='{"avg_daily_demand":4.0,"demand_trend":"stable","days_of_stock_remaining":3,"stockout_risk":"high","forecast_notes":"High risk."}'
         )
         from multi_agent.agents import demand_forecaster

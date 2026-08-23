@@ -53,24 +53,24 @@ def test_min_chunks():
 
 
 
-def test_chromadb_collection(monkeypatch):
+def test_chromadb_collection(tmp_path, monkeypatch):
     """TC-07-P2-ING-04: ChromaDB Collection Exists"""
     import chromadb
-    
+
     def dummy_embed_documents(self, texts, **kwargs):
         return [[0.1] * 3072 for _ in texts]
-        
+
     from langchain_google_genai import GoogleGenerativeAIEmbeddings
     monkeypatch.setattr(GoogleGenerativeAIEmbeddings, "embed_documents", dummy_embed_documents)
-    
-    # Ensure vectorstore is built
-    build_vectorstore()
-    
-    persist_dir = "./chroma_db"
-    if not os.path.exists(persist_dir):
-        alt = os.path.join(phase2_dir, "chroma_db")
-        if os.path.exists(alt):
-            persist_dir = alt
+
+    # Build into an isolated directory. Calling build_vectorstore() with no
+    # persist_dir writes to the SHARED ./chroma_db used by the running app, and
+    # the dummy vectors above are not real embeddings -- they are 3072 identical
+    # constants. Doing that poisoned the live store with hundreds of degenerate
+    # points and broke retrieval for every query. This test only needs to prove a
+    # collection persists and holds the chunks, which an isolated store does.
+    persist_dir = str(tmp_path / "chroma_db")
+    build_vectorstore(persist_dir=persist_dir)
 
     client = chromadb.PersistentClient(path=persist_dir)
     collections = [c.name for c in client.list_collections()]
@@ -291,10 +291,13 @@ def test_ingest_small_chunk_warning():
     assert len(chunks) < 20
 
 
-def test_ingest_build_vectorstore_default():
+def test_ingest_build_vectorstore_default(tmp_path):
     """Test build_vectorstore with default chunks=None"""
     from src.rag.ingest import build_vectorstore
-    v = build_vectorstore(chunks=None)
+    # Isolated persist_dir: the default writes into the live ./chroma_db, and
+    # because Chroma.from_documents() appends, every test run added another full
+    # copy of the manual to the store the running app queries.
+    v = build_vectorstore(chunks=None, persist_dir=str(tmp_path / "chroma_db"))
     assert v is not None
 
 
@@ -311,14 +314,81 @@ def test_ask_question_chain_none():
     assert "answer" in res
 
 
-def test_ask_question_exception_handling():
-    """Test ask_question exception fallback block"""
-    class BrokenChain:
-        def invoke(self, inputs):
-            raise RuntimeError("Simulated chain error")
+class _BrokenChain:
+    """A chain whose invoke() always fails, with a caller-supplied message."""
 
-    res = ask_question("What is SKU?", chain=BrokenChain())
-    assert "Error executing query" in res["answer"]
+    def __init__(self, message):
+        self.message = message
+
+    def invoke(self, inputs):
+        raise RuntimeError(self.message)
+
+
+class _StubChain:
+    """A chain that succeeds, so the success and failure contracts can be compared."""
+
+    def invoke(self, inputs):
+        return {"result": "SKUs follow the SKU-CAT-NNNN format.", "source_documents": []}
+
+
+def test_ask_question_exception_handling():
+    """Test ask_question exception fallback block.
+
+    This asserted `"Error executing query" in res["answer"]` -- the old behaviour,
+    where the raw exception text was returned in the field the UI renders as the
+    assistant's reply. `ask_question` now reports a failure *as* a failure:
+    `answer` carries a sentence fit to show a user and the diagnostic detail moves
+    to `error`/`is_error`. The assertion below is the guarantee that motivated
+    that change, so it checks the separation rather than the wording.
+    """
+    res = ask_question("What is SKU?", chain=_BrokenChain("Simulated chain error"))
+
+    # A caller can tell this apart from an answer.
+    assert res["is_error"] is True
+    # The diagnostic is preserved for logs and debugging...
+    assert "Simulated chain error" in res["error"]
+    # ...but does not leak into the text rendered to the operator.
+    assert "Simulated chain error" not in res["answer"]
+    assert "RuntimeError" not in res["answer"]
+    assert res["answer"].strip()
+    assert res["source_documents"] == []
+
+
+def test_ask_question_quota_error_is_not_reported_as_a_gap_in_the_manual():
+    """A provider quota outage must not read as 'the manual does not cover this'.
+
+    The failing call returns HTTP 429 with a payload quoting internal quota ids and
+    a billing URL. That payload used to be rendered verbatim as the answer, so an
+    operator asking a policy question saw a Google error blob styled as guidance.
+    """
+    payload = (
+        "429 RESOURCE_EXHAUSTED: You exceeded your current quota. "
+        "quota_id: EmbedContentRequestsPerDayPerUserPerProjectPerModel-FreeTier, "
+        "see https://ai.google.dev/gemini-api/docs/rate-limits"
+    )
+    res = ask_question("What is the PO approval threshold?", chain=_BrokenChain(payload))
+
+    assert res["is_error"] is True
+    answer = res["answer"].lower()
+    assert "quota" in answer
+    # Named as a service limit, explicitly not a gap in the source material.
+    assert "not a" in answer and "manual" in answer
+    # None of the raw payload internals reach the operator.
+    assert "RESOURCE_EXHAUSTED" not in res["answer"]
+    assert "429" not in res["answer"]
+    assert "https://" not in res["answer"]
+    # The detail is still recoverable for diagnosis.
+    assert "RESOURCE_EXHAUSTED" in res["error"]
+
+
+def test_ask_question_success_is_distinguishable_from_failure():
+    """The success path must not set the error flag, or `is_error` proves nothing."""
+    ok = ask_question("What is the SKU format?", chain=_StubChain())
+    assert not ok.get("is_error")
+    assert "SKU-CAT-NNNN" in ok["answer"]
+
+    failed = ask_question("What is the SKU format?", chain=_BrokenChain("boom"))
+    assert failed.get("is_error")
 
 
 def test_ingest_script_entrypoint():
