@@ -57,9 +57,32 @@ def seed_default_suppliers():
         db.close()
 
 
+def seed_default_admin():
+    """Create the bootstrap manager account at startup.
+
+    `ensure_default_user` was previously invoked only from the tokenless and
+    `test_token` bypass branches in `get_current_user`. Those branches are gone,
+    so without this call a fresh database would hold no users and every client --
+    the React app, the MCP server, both agent layers -- would have nothing to log
+    in with.
+    """
+    db = SessionLocal()
+    try:
+        from src.backend.routers.auth import ensure_default_user, DEFAULT_ADMIN_EMAIL
+
+        ensure_default_user(db)
+        logger.info("default_admin_ready", user_email=DEFAULT_ADMIN_EMAIL, poc_id="POC-07", phase="P1")
+    except Exception as exc:
+        db.rollback()
+        logger.error("default_admin_seed_error", error=str(exc), poc_id="POC-07", phase="P1")
+    finally:
+        db.close()
+
+
 @asynccontextmanager
 async def lifespan(app_instance: FastAPI):
     Base.metadata.create_all(bind=engine)
+    seed_default_admin()
     seed_default_suppliers()
     yield
 
@@ -74,12 +97,30 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# `allow_origins=["*"]` with `allow_credentials=True` is not the inert
+# combination it is often assumed to be. Measured against this running service:
+# Starlette does not echo a literal `*` when credentials are allowed -- it
+# reflects the request's own Origin back and adds `Access-Control-Allow-Credentials:
+# true` plus `Vary: Origin`. A request from `https://evil.example.com` was
+# answered with `access-control-allow-origin: https://evil.example.com`, and the
+# preflight authorised DELETE/PATCH/POST/PUT. Any page the operator visits while
+# holding a token could therefore drive the whole inventory API from their
+# browser. An explicit allowlist is the fix; the default covers the two dev
+# origins this repo actually serves (Vite on 3000 per vite.config.js:7, Streamlit
+# on 8501).
+_default_origins = "http://localhost:3000,http://127.0.0.1:3000,http://localhost:8501,http://127.0.0.1:8501"
+CORS_ALLOW_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv("CORS_ALLOW_ORIGINS", _default_origins).split(",")
+    if origin.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=CORS_ALLOW_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 
@@ -116,9 +157,14 @@ async def log_requests(request: Request, call_next):
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
+    # `exc.headers` must be forwarded. This handler replaces FastAPI's own, and
+    # by dropping the headers it silently discarded the `WWW-Authenticate: Bearer`
+    # challenge that every 401 from get_current_user sets -- leaving the API
+    # non-compliant with RFC 7235 and giving clients nothing to key retry logic on.
     return JSONResponse(
         status_code=exc.status_code,
         content={"detail": exc.detail, "poc_id": "POC-07", "phase": "P1"},
+        headers=getattr(exc, "headers", None),
     )
 
 

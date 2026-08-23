@@ -27,8 +27,23 @@ class MovementType(str, enum.Enum):
     sale = "sale"
     adjustment = "adjustment"
     transfer = "transfer"
+    # The member name `returnm` is odd but deliberate -- `return` is a Python
+    # keyword and cannot be an identifier. The spec prescribes exactly this
+    # spelling (Phasewise - Userstories/phase1-fullstack-crud.md:93).
+    #
+    # A second member `return_movement = "return"` used to follow this line.
+    # Because it carried an identical value, Python's enum machinery silently
+    # folded it into an *alias* of `returnm` rather than creating a sixth member,
+    # so it was unreachable by name and referenced nowhere -- but it still leaked
+    # twice into the public API surface:
+    #   * the published OpenAPI schema advertised
+    #       "enum": ["receipt","sale","adjustment","transfer","return","return"]
+    #     which is invalid JSON Schema (enum values must be unique) and makes
+    #     strict client generators emit a duplicate constant or fail outright;
+    #   * 422 bodies read "Input should be 'receipt', 'sale', 'adjustment',
+    #     'transfer', 'return' or 'return'" -- shown verbatim to API consumers.
+    # Both symptoms were measured against the running app before removal.
     returnm = "return"
-    return_movement = "return"
 
 
 class POStatus(str, enum.Enum):
@@ -91,7 +106,19 @@ class StockLevel(Base):
 
     @property
     def quantity_available(self) -> int:
-        return max(0, (self.quantity_on_hand or 0) - (self.quantity_reserved or 0))
+        """Working stock: on_hand - reserved.
+
+        Deliberately NOT clamped at 0. Both specs define this as a plain
+        subtraction (overview.md "quantity_available | Integer | on_hand -
+        reserved"; inventory_manual.md Section 2 "quantity_on_hand minus
+        quantity_reserved"), and the manual's Section 15 troubleshooting entry
+        requires negative stock to be *visible* so staff can correct it with a
+        positive adjustment. A max(0, ...) clamp here reported 0 to the UI and to
+        the alerting logic while total_stock_value still multiplied the real
+        negative quantity by cost_price -- so inventory value silently went
+        negative with no operator-visible cause.
+        """
+        return (self.quantity_on_hand or 0) - (self.quantity_reserved or 0)
 
 
 class StockMovement(Base):

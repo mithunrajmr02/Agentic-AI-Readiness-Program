@@ -12,18 +12,53 @@ import structlog
 logger = structlog.get_logger()
 
 
+def _next_sequence(db: Session, column, prefix: str) -> int:
+    """Return the next free sequence number for identifiers shaped `<prefix><NNNN>`.
+
+    Counting rows and adding one is only correct while nothing is ever deleted.
+    Reproduced against the live database: with PO-2026-0001..0009 on file,
+    deleting one row left 8 rows, so `count() + 1` proposed PO-2026-0009 -- which
+    still existed -- and `POST /api/v1/orders` answered HTTP 500 on the
+    `po_number` UNIQUE constraint. Every subsequent order creation failed the
+    same way, permanently, because the count never catches back up. The same
+    defect applied to `generate_sku`.
+
+    Deriving from the highest number issued rather than the population size also
+    means deleting a mid-sequence identifier no longer drags every future one
+    backwards: retiring PO-2026-0008 leaves PO-2026-0009 in place and the next
+    order becomes PO-2026-0010. It is not a monotonic guarantee -- deleting the
+    *highest* identifier does free its number for reuse, and only a persisted
+    counter would prevent that -- but it removes the collision.
+
+    The trailing loop closes gaps left by identifiers that do not parse or that
+    were inserted out of band. It does not make this safe against two concurrent
+    inserts -- that needs a retry on IntegrityError or a real sequence -- but
+    SQLite serialises writers, and the reproduced failure was deletion, not
+    concurrency.
+    """
+    highest = 0
+    taken = set()
+    for (value,) in db.query(column).filter(column.like(f"{prefix}%")).all():
+        taken.add(value)
+        try:
+            highest = max(highest, int(str(value)[len(prefix):]))
+        except (TypeError, ValueError):
+            continue  # hand-edited or legacy identifier; it cannot own a slot
+
+    candidate = highest + 1
+    while f"{prefix}{candidate:04d}" in taken:
+        candidate += 1
+    return candidate
+
+
 def generate_sku(category: str, db: Session) -> str:
     prefix = CATEGORY_PREFIXES.get(category, "GEN")
-    count = db.query(Product).filter(Product.sku.like(f"SKU-{prefix}-%")).count()
-    return f"SKU-{prefix}-{count + 1:04d}"
+    return f"SKU-{prefix}-{_next_sequence(db, Product.sku, f'SKU-{prefix}-'):04d}"
 
 
 def generate_po_number(db: Session) -> str:
     year = date.today().year
-    count = db.query(PurchaseOrder).filter(
-        PurchaseOrder.po_number.like(f"PO-{year}-%")
-    ).count()
-    return f"PO-{year}-{count + 1:04d}"
+    return f"PO-{year}-{_next_sequence(db, PurchaseOrder.po_number, f'PO-{year}-'):04d}"
 
 
 def check_stock_alerts(product: Product, stock: StockLevel, db: Session) -> None:
@@ -52,7 +87,11 @@ def check_stock_alerts(product: Product, stock: StockLevel, db: Session) -> None
     for alert in existing_alerts:
         alert.is_resolved = True
 
-    if available == 0:
+    # `<= 0`, not `== 0`: quantity_available is no longer clamped at zero, so an
+    # oversold product can be negative. Spec rule 2 says "quantity_available = 0
+    # -> out_of_stock"; negative stock is strictly worse than zero and must not
+    # fall through to the milder low_stock branch below.
+    if available <= 0:
         alert = StockAlert(
             product_id=product.id,
             alert_type="out_of_stock",
@@ -141,7 +180,9 @@ def get_dashboard_data(db: Session) -> Dict[str, Any]:
         stock = product.stock_level
         if stock:
             available = stock.quantity_available
-            if available == 0:
+            # `<= 0` for the same reason as check_stock_alerts: an oversold
+            # product has negative availability and is out of stock, not low.
+            if available <= 0:
                 out_of_stock_count += 1
             elif available <= (product.reorder_point or 0):
                 low_stock_count += 1

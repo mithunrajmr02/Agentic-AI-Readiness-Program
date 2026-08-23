@@ -1,5 +1,5 @@
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from src.backend.database import get_db
@@ -9,7 +9,8 @@ from src.backend.models import (
 )
 from src.backend.routers.auth import get_current_user
 from src.backend.schemas import (
-    ProductCreate, ProductResponse, StockMovementCreate, StockMovementResponse,
+    ProductCreate, ProductResponse, ProductListResponse,
+    StockMovementCreate, StockMovementResponse,
     PurchaseOrderCreate, PurchaseOrderResponse, SupplierCreate, SupplierResponse,
     DashboardResponse
 )
@@ -30,6 +31,18 @@ def create_product(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    # A supplier_id is optional, but if one is given it has to exist. Without this
+    # check the insert reached SQLite and tripped `FOREIGN KEY constraint failed`,
+    # which the catch-all handler in main.py turned into an opaque HTTP 500 --
+    # measured against the running app: `supplier_id: 777777` returned
+    # `{"detail": "Internal server error"}`. The product was never created (the
+    # constraint held), so nothing was corrupted; the caller was simply told the
+    # server had broken rather than which field was wrong.
+    if product_in.supplier_id is not None:
+        supplier = db.query(Supplier).filter(Supplier.id == product_in.supplier_id).first()
+        if not supplier:
+            raise HTTPException(status_code=400, detail=f"Supplier {product_in.supplier_id} not found")
+
     sku = generate_sku(product_in.category.value if isinstance(product_in.category, Category) else str(product_in.category), db)
 
     product = Product(
@@ -56,7 +69,7 @@ def create_product(
     return product
 
 
-@router.get("/products", response_model=List[ProductResponse])
+@router.get("/products", response_model=List[ProductListResponse])
 def list_products(
     category: Optional[str] = None,
     low_stock: Optional[bool] = None,
@@ -76,11 +89,46 @@ def list_products(
 
 
 @router.get("/products/{product_id}", response_model=ProductResponse)
-def get_product(product_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def get_product(
+    product_id: int,
+    movement_limit: int = Query(
+        50, ge=1, le=500,
+        description="How many of the most recent stock movements to include."
+    ),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """US-07-P1-07: product details plus its *recent* movement history.
+
+    Movements are queried explicitly instead of via lazy relationship loading.
+    Relying on the relationship returned the ledger oldest-first and unbounded --
+    the opposite of "recent", and it grows forever. The `id` tie-break matters:
+    `recorded_at` uses SQLite's `func.now()`, which has one-second granularity, so
+    movements recorded in the same second are otherwise ordered arbitrarily.
+    """
     product = db.query(Product).filter(Product.id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail=f"Product {product_id} not found")
-    return product
+
+    recent_movements = (
+        db.query(StockMovement)
+        .filter(StockMovement.product_id == product_id)
+        .order_by(StockMovement.recorded_at.desc(), StockMovement.id.desc())
+        .limit(movement_limit)
+        .all()
+    )
+
+    response = ProductResponse.model_validate(product)
+    response.movements = [StockMovementResponse.model_validate(m) for m in recent_movements]
+
+    logger.info(
+        "movement_history_viewed",
+        poc_id="POC-07",
+        phase="P1",
+        product_sku=product.sku,
+        movements_returned=len(recent_movements),
+    )
+    return response
 
 
 @router.patch("/products/{product_id}/stock", response_model=StockMovementResponse)
@@ -130,7 +178,7 @@ def update_stock(
 
 # --- Stock Alerts ---
 
-@router.get("/stock/low-alerts", response_model=List[ProductResponse])
+@router.get("/stock/low-alerts", response_model=List[ProductListResponse])
 def get_low_stock_alerts(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     products = db.query(Product).all()
     alert_products = []
@@ -172,7 +220,7 @@ def list_suppliers(db: Session = Depends(get_db), current_user: User = Depends(g
     return db.query(Supplier).all()
 
 
-@router.get("/suppliers/{supplier_id}/catalog", response_model=List[ProductResponse])
+@router.get("/suppliers/{supplier_id}/catalog", response_model=List[ProductListResponse])
 def get_supplier_catalog(supplier_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     supplier = db.query(Supplier).filter(Supplier.id == supplier_id).first()
     if not supplier:
@@ -190,6 +238,28 @@ def create_purchase_order(
     supplier = db.query(Supplier).filter(Supplier.id == po_in.supplier_id).first()
     if not supplier:
         raise HTTPException(status_code=400, detail=f"Supplier {po_in.supplier_id} not found")
+
+    # The line items carry a product_id, and it was the one foreign key on this
+    # endpoint nobody checked. Measured against the running app: an order for
+    # `product_id: 999999` returned HTTP 500 `{"detail": "Internal server error"}`
+    # from SQLite's `FOREIGN KEY constraint failed`, while the sibling check three
+    # lines above answered a clean 400 naming the missing supplier. Same endpoint,
+    # same class of mistake, two different answers.
+    #
+    # Every id is resolved in one query and *all* the missing ones are reported, so
+    # a client fixing a multi-line order does not have to resubmit once per bad id.
+    requested_ids = {item.product_id for item in po_in.items}
+    existing_ids = {
+        row[0] for row in db.query(Product.id).filter(Product.id.in_(requested_ids)).all()
+    }
+    missing_ids = sorted(requested_ids - existing_ids)
+    if missing_ids:
+        listed = ", ".join(str(i) for i in missing_ids)
+        raise HTTPException(
+            status_code=400,
+            detail=f"Product {listed} not found" if len(missing_ids) == 1
+                   else f"Products not found: {listed}",
+        )
 
     po_number = generate_po_number(db)
 

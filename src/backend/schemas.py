@@ -1,6 +1,6 @@
 from datetime import date, datetime
 from typing import List, Optional
-from pydantic import BaseModel, EmailStr, ConfigDict, Field
+from pydantic import BaseModel, EmailStr, ConfigDict, Field, model_validator
 from src.backend.models import Category, MovementType, POStatus
 
 
@@ -40,9 +40,42 @@ class StockLevelResponse(BaseModel):
 # StockMovement Schemas
 class StockMovementCreate(BaseModel):
     movement_type: MovementType
-    quantity: int = Field(description="Movement quantity cannot be zero")
+    quantity: int = Field(description="Movement quantity cannot be zero. Positive = stock in, negative = stock out.")
     reference_number: Optional[str] = None
     notes: Optional[str] = None
+
+    @model_validator(mode="after")
+    def check_quantity_sign(self):
+        """Enforce the sign convention the specs state but the code never checked.
+
+        overview.md StockMovement: "quantity | Integer | Units moved (positive =
+        in, negative = out)". inventory_manual.md Section 6 pins two of the five
+        types down explicitly:
+          - "receipt: Goods received from a purchase order (positive quantity)"
+          - "sale: Goods sold to a customer (negative quantity)"
+        adjustment / transfer / return are intentionally left unconstrained --
+        the manual documents both directions for them (Section 11 "If positive:
+        physical count was higher... If negative: shrinkage, theft, or damage";
+        Section 6 "return: Customer return or return of defective goods to
+        supplier").
+
+        Before this, a `sale` of +30 was accepted and *increased* stock, and a
+        zero-quantity movement was recorded as a no-op row despite the field
+        description above already promising it could not be.
+        """
+        if self.quantity == 0:
+            raise ValueError("Movement quantity cannot be zero")
+        if self.movement_type == MovementType.receipt and self.quantity < 0:
+            raise ValueError(
+                "A 'receipt' movement records goods coming in and must have a positive quantity. "
+                "To remove stock, use 'sale' (negative) or 'adjustment'."
+            )
+        if self.movement_type == MovementType.sale and self.quantity > 0:
+            raise ValueError(
+                "A 'sale' movement records goods going out and must have a negative quantity. "
+                "To add stock, use 'receipt' (positive) or 'adjustment'."
+            )
+        return self
 
 
 class StockMovementResponse(BaseModel):
@@ -89,7 +122,18 @@ class ProductCreate(BaseModel):
     supplier_id: Optional[int] = None
 
 
-class ProductResponse(BaseModel):
+class ProductListResponse(BaseModel):
+    """A product WITHOUT its movement ledger, for collection endpoints.
+
+    US-07-P1-07 scopes movement history to the *detail* route ("When GET
+    /api/v1/products/{id} (include movements)"). Serving `movements` from the
+    collection routes as well meant every list response carried the full
+    unbounded ledger of every product it returned: measured at 200 movement
+    objects / 33 KB for just 5 products with 40 movements each, and growing
+    without limit as the ledger accumulates. `GET /products` backs the dashboard
+    grid and is fetched on every page load, so that cost is paid constantly for
+    data the grid never renders.
+    """
     model_config = ConfigDict(from_attributes=True)
     id: int
     sku: str
@@ -103,6 +147,15 @@ class ProductResponse(BaseModel):
     supplier_id: Optional[int]
     created_at: Optional[datetime]
     stock_level: Optional[StockLevelResponse] = None
+
+
+class ProductResponse(ProductListResponse):
+    """A product WITH its recent movement ledger, for the detail route.
+
+    `movements` is populated explicitly by the route (newest first, bounded by
+    the `movement_limit` query parameter) rather than by lazy relationship
+    loading, so "recent" in US-07-P1-07 actually means recent.
+    """
     movements: Optional[List[StockMovementResponse]] = []
 
 
@@ -154,7 +207,9 @@ class StockAlertResponse(BaseModel):
     message: str
     is_resolved: bool
     triggered_at: Optional[datetime]
-    product: Optional[ProductResponse] = None
+    # Lean product: an alert identifies which product tripped, it does not need
+    # that product's whole movement ledger nested inside it.
+    product: Optional[ProductListResponse] = None
 
 
 # Dashboard Schemas
