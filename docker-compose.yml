@@ -1,4 +1,13 @@
-version: '3.8'
+# =============================================================================
+# POC-07 -- Retail Inventory Management & Procurement System
+# =============================================================================
+# Usage:
+#   cp .env.example .env      # compose reads GOOGLE_API_KEY etc. from it
+#   docker compose up backend streamlit-ui web
+#   docker compose --profile scanner up sonarqube sonar-scanner
+#
+# The `version:` key was removed -- it is obsolete in Compose v2 and only
+# produced a deprecation warning on every invocation.
 
 services:
   # FastAPI Backend API Service
@@ -10,12 +19,37 @@ services:
     ports:
       - "8000:8000"
     environment:
+      # Left as a relative sqlite URL on purpose: src/backend/database.py:17
+      # rewrites exactly this value to an absolute path under the app root, so
+      # the database always lands in the mounted working tree rather than
+      # wherever the process happened to start.
       - DATABASE_URL=sqlite:///./inventory.db
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
+      - SECRET_KEY=${SECRET_KEY:-}
+      # The browser talks to the SPA on the host, so the allowlist must name the
+      # host-published origins, not the compose service names.
+      - CORS_ALLOW_ORIGINS=${CORS_ALLOW_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000,http://localhost:8501,http://127.0.0.1:8501}
+      - DEFAULT_ADMIN_EMAIL=${DEFAULT_ADMIN_EMAIL:-admin@retail.com}
+      - DEFAULT_ADMIN_PASSWORD=${DEFAULT_ADMIN_PASSWORD:-admin}
     volumes:
       - .:/app
     command: uvicorn src.backend.main:app --host 0.0.0.0 --port 8000 --reload
+    healthcheck:
+      # depends_on alone only waits for the container to start, not for uvicorn
+      # to accept connections, so the dependent services raced the backend and
+      # their first API call failed. condition: service_healthy fixes that.
+      #
+      # Must be /health, not an /api/v1 route: every business endpoint now
+      # requires a bearer token and answers 401, which `curl -fsS` treats as a
+      # failure -- the probe would never go healthy and both dependents would
+      # block indefinitely. /health is unauthenticated and returns
+      # {"status":"ok","poc_id":"POC-07","phase":"P1"}.
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
 
   # Streamlit Conversational AI & RAG Interface
   streamlit-ui:
@@ -26,14 +60,49 @@ services:
     ports:
       - "8501:8501"
     environment:
-      - BACKEND_API_URL=http://backend:8000
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      # Was `BACKEND_API_URL=http://backend:8000`, which is wrong twice over:
+      # no code anywhere reads BACKEND_API_URL (all five server-side consumers
+      # read API_BASE_URL), and the value omits the /api/v1 prefix every route
+      # is mounted under. The container therefore fell back to
+      # http://localhost:8000/api/v1 -- itself, where nothing listens -- so every
+      # Streamlit call failed with a connection error.
+      - API_BASE_URL=http://backend:8000/api/v1
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
+      # The Streamlit write path logs in as a service account; without matching
+      # credentials it gets 401 from the now-enforcing backend.
+      - SERVICE_ACCOUNT_EMAIL=${SERVICE_ACCOUNT_EMAIL:-admin@retail.com}
+      - SERVICE_ACCOUNT_PASSWORD=${SERVICE_ACCOUNT_PASSWORD:-admin}
     volumes:
       - .:/app
     command: streamlit run src/ui/chat_streamlit/app.py --server.port 8501 --server.address 0.0.0.0
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+
+  # React SPA (Vite dev server) -- the Phase 1 operator UI.
+  # This service did not exist, so the primary user-facing interface was absent
+  # from the containerised stack entirely.
+  web:
+    image: node:22-alpine
+    container_name: retail_inventory_web
+    working_dir: /app
+    ports:
+      - "3000:3000"
+    environment:
+      # Vite only exposes VITE_-prefixed vars, and reads this at build/serve time.
+      # localhost, not http://backend:8000 -- this URL is resolved by the user's
+      # browser on the host, which cannot resolve compose service names.
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:8000/api/v1}
+    volumes:
+      - ./src/ui/web_react:/app
+      # Named volume so the container's linux node_modules do not overwrite (or
+      # get overwritten by) a host install built for a different platform.
+      - web_node_modules:/app/node_modules
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    depends_on:
+      backend:
+        condition: service_healthy
 
   # SonarQube Code Quality & Security Scanner
   sonarqube:
@@ -51,7 +120,15 @@ services:
     volumes:
       - .:/usr/src
     environment:
-      - SONAR_HOST_URL=http://host.docker.internal:9001
-      - SONAR_LOGIN=${SONAR_LOGIN:-squ_b1f02984f5e3a766a010933fa3dddf6b4860d3c7}
+      - SONAR_HOST_URL=${SONAR_HOST_URL:-http://host.docker.internal:9001}
+      # A live SonarQube user token was previously hardcoded here as the default
+      # value of this variable, committed to the repository. It has been removed;
+      # supply the token via the environment or a local .env instead. That token
+      # must be considered compromised and revoked in SonarQube.
+      # SONAR_TOKEN is the current name; SONAR_LOGIN is the legacy alias.
+      - SONAR_TOKEN=${SONAR_TOKEN:-}
     profiles:
       - scanner
+
+volumes:
+  web_node_modules:

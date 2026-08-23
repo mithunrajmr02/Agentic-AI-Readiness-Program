@@ -1,5 +1,5 @@
-version: '3.8'
-
+# SonarQube scanner stack for Phase 1. `version:` removed -- obsolete in Compose
+# v2, which warned about it on every invocation.
 services:
   sonarqube:
     image: sonarqube:lts-community
@@ -16,7 +16,10 @@ services:
     volumes:
       - .:/usr/src
     environment:
-      - SONAR_HOST_URL=http://host.docker.internal:9001
-      - SONAR_LOGIN=squ_b1f02984f5e3a766a010933fa3dddf6b4860d3c7
+      - SONAR_HOST_URL=${SONAR_HOST_URL:-http://host.docker.internal:9001}
+      # A live SonarQube user token was hardcoded here and committed. Removed;
+      # pass it in via the environment. Treat the old value as compromised and
+      # revoke it in SonarQube. See also the root docker-compose.yml.
+      - SONAR_TOKEN=${SONAR_TOKEN:-}
     profiles:
       - scanner

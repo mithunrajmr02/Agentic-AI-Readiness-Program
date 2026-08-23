@@ -1,0 +1,52 @@
+# Keeps the build context small and prevents host-specific or secret files from
+# being baked into the image. Without this, `COPY . .` in the Dockerfile pulls in
+# phase1/venv (a full site-packages tree), node_modules, the Chroma vector store
+# and the .git history -- hundreds of megabytes, and a copy of any local .env.
+
+# Secrets and local config
+.env
+.env.*
+!.env.example
+
+# Virtual environments
+venv/
+**/venv/
+.venv/
+ENV/
+env/
+
+# Node / frontend build output
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+.vite/
+
+# Python caches
+__pycache__/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+**/.pytest_cache/
+.coverage
+htmlcov/
+
+# Local data -- the database and vector store are created at runtime in the
+# mounted volume, and copying a stale one in would shadow it.
+*.db
+*.sqlite
+*.sqlite3
+chroma_db/
+**/chroma_db/
+
+# VCS, tooling and scratch
+.git/
+.gitignore
+.scannerwork/
+**/.scannerwork/
+scratch/
+.claude/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
