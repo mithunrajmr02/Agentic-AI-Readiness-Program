@@ -3,6 +3,7 @@ load_dotenv()
 import os
 import sys
 import logging
+import contextlib
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 
@@ -28,9 +29,14 @@ from langchain_core.language_models.llms import LLM
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] [POC-07] %(message)s")
 logger = logging.getLogger("rag_chain")
 
-# Environment setup defaults
-os.environ.setdefault("LANGCHAIN_TRACING_V2", "true")
+# Environment setup defaults.
+# Only advertise tracing when a key is actually configured. Setting
+# LANGCHAIN_TRACING_V2=true unconditionally makes the LangChain callback handler
+# ship every span to api.smith.langchain.com, which 401s on every run and floods
+# stderr with "Failed to send compressed multipart ingest ... 401 Unauthorized".
 os.environ.setdefault("LANGCHAIN_PROJECT", "AI-Readiness-POC-07-P2")
+if os.getenv("LANGCHAIN_API_KEY"):
+    os.environ.setdefault("LANGCHAIN_TRACING_V2", "true")
 
 DEFAULT_NO_INFO_MSG = "I don't have that information in the inventory manual."
 
@@ -84,8 +90,9 @@ def build_rag_chain(persist_dir: str = str(PROJECT_ROOT / "chroma_db"), collecti
     retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
     
     from langchain_google_genai import ChatGoogleGenerativeAI
-    llm_model = os.getenv("GEMINI_CHAT_MODEL", "gemini-2.5-flash-lite")
-    llm = ChatGoogleGenerativeAI(model=llm_model, temperature=0.2)
+    from src.model_config import chat_model
+
+    llm = ChatGoogleGenerativeAI(model=chat_model(), temperature=0.2)
 
 
     return RetrievalQA.from_chain_type(
@@ -113,46 +120,80 @@ def ask_question(question: str, chain: Optional[Any] = None) -> Dict[str, Any]:
             "source_documents": []
         }
 
-    # OpenTelemetry tracer setup
-    tracer = None
-    span_context = None
-    try:
-        from opentelemetry import trace
-        tracer = trace.get_tracer("POC-07-RAG-Tracer")
-        span_context = tracer.start_as_current_span("rag_retrieve_and_generate")
-    except (ImportError, RuntimeError, AttributeError):
-        pass
+    # OpenTelemetry span must WRAP the retrieval+generation work.
+    # Previously the code did `span_context = tracer.start_as_current_span(...)`
+    # without entering it, then called `__exit__` in a finally block. Creating a
+    # generator-based context manager does not start a span; the un-entered
+    # `__exit__` starts it and immediately raises "generator didn't stop", which
+    # was swallowed. Net effect: the span reported 0.04ms for a 4000ms query --
+    # 0.001% of the work -- and only ended when the generator was garbage
+    # collected. ExitStack enters the span properly so its duration is real.
+    with contextlib.ExitStack() as stack:
+        try:
+            from opentelemetry import trace
+            tracer = trace.get_tracer("POC-07-RAG-Tracer")
+            span = stack.enter_context(tracer.start_as_current_span("rag_retrieve_and_generate"))
+            span.set_attribute("poc_id", "POC-07")
+            span.set_attribute("phase", "P2")
+        except (ImportError, RuntimeError, AttributeError):
+            pass
 
-    try:
-        if os.getenv("LANGCHAIN_API_KEY"):
-            try:
-                from langsmith import traceable
-                @traceable(project_name="AI-Readiness-POC-07-P2")
-                def _run_query(q, c):
-                    return c.invoke({"query": q})
-                res = _run_query(question, chain)
-            except (ImportError, RuntimeError, AttributeError):
+        try:
+            if os.getenv("LANGCHAIN_API_KEY"):
+                try:
+                    from langsmith import traceable
+                    @traceable(project_name="AI-Readiness-POC-07-P2")
+                    def _run_query(q, c):
+                        return c.invoke({"query": q})
+                    res = _run_query(question, chain)
+                except (ImportError, RuntimeError, AttributeError):
+                    res = chain.invoke({"query": question})
+            else:
                 res = chain.invoke({"query": question})
-        else:
-            res = chain.invoke({"query": question})
 
-        answer = res.get("result", "") or res.get("answer", "")
-        source_documents = res.get("source_documents", [])
-        
-        return {
-            "answer": answer,
-            "source_documents": source_documents,
-            "query": question
-        }
-    except Exception as e:
-        logger.error(f"Error during RAG chain execution for POC-07: {e}")
-        return {
-            "answer": f"Error executing query: {str(e)}",
-            "source_documents": []
-        }
-    finally:
-        if span_context:
-            try:
-                span_context.__exit__(None, None, None)
-            except Exception:
-                pass
+            answer = res.get("result", "") or res.get("answer", "")
+            source_documents = res.get("source_documents", [])
+
+            return {
+                "answer": answer,
+                "source_documents": source_documents,
+                "query": question
+            }
+        except Exception as e:
+            logger.error(f"Error during RAG chain execution for POC-07: {e}")
+
+            # Report a failure *as* a failure. This used to return
+            # `answer=f"Error executing query: {e}"`, which put the provider's
+            # raw payload into the field the UI renders as the assistant's reply
+            # -- an operator asking about PO approval thresholds was shown a
+            # Google 429 JSON blob quoting internal quota ids
+            # ("EmbedContentRequestsPerDayPerUserPerProjectPerModel-FreeTier"),
+            # a billing URL and a stack of RPC type names, styled as an answer.
+            #
+            # The structural problem is worse than the wording: with the error
+            # text living in `answer`, a caller cannot tell a failure from a
+            # reply. Anything checking "did I get a non-empty answer" scored a
+            # quota outage as a successful response. `error` and `is_error` make
+            # the distinction checkable; `answer` keeps a sentence fit to show a
+            # user, and the diagnostic detail stays in `error` and the log.
+            detail = str(e)
+            lowered = detail.lower()
+            if "resource_exhausted" in lowered or "429" in detail or "quota" in lowered:
+                message = (
+                    "The inventory manual is temporarily unavailable: the language model "
+                    "provider's request quota is exhausted. This is a service limit, not a "
+                    "gap in the manual — the same question should work once the quota resets."
+                )
+            else:
+                message = (
+                    "The inventory manual could not be searched because of a technical error. "
+                    "No answer is available for this question right now — please retry, and "
+                    "treat this as a failure rather than as 'the manual does not say'."
+                )
+            return {
+                "answer": message,
+                "source_documents": [],
+                "query": question,
+                "is_error": True,
+                "error": detail,
+            }

@@ -70,32 +70,67 @@ def split_documents(docs: List[Document], chunk_size: int = 600, chunk_overlap: 
 def get_embeddings():
     """Return embedding function (GoogleGenerativeAIEmbeddings)."""
     from langchain_google_genai import GoogleGenerativeAIEmbeddings
-    model_name = os.getenv("GEMINI_EMBEDDING_MODEL", "models/gemini-embedding-2")
+    from src.model_config import api_key as resolve_api_key, embedding_model
+
+    model_name = embedding_model()
     logger.info(f"Initializing GoogleGenerativeAIEmbeddings (model: {model_name})")
-    api_key = os.getenv("GOOGLE_API_KEY", "dummy_fallback_key")
-    return GoogleGenerativeAIEmbeddings(model=model_name, google_api_key=api_key)
+    # Previously defaulted to the literal "dummy_fallback_key" and ignored
+    # GEMINI_API_KEY, so a clone that set only GEMINI_API_KEY silently embedded
+    # against an invalid credential.
+    return GoogleGenerativeAIEmbeddings(model=model_name, google_api_key=resolve_api_key())
+
+
+def drop_collection(persist_dir: str = DEFAULT_PERSIST_DIR, collection_name: str = COLLECTION_NAME) -> bool:
+    """Delete a persisted collection if it exists. Returns True if one was removed."""
+    if not os.path.exists(persist_dir):
+        return False
+    try:
+        import chromadb
+        client = chromadb.PersistentClient(path=persist_dir)
+        if collection_name in [c.name for c in client.list_collections()]:
+            client.delete_collection(collection_name)
+            logger.info(f"Dropped existing collection '{collection_name}' before re-ingestion.")
+            return True
+    except Exception as e:
+        logger.warning(f"Could not drop collection '{collection_name}': {e}")
+    return False
 
 
 def build_vectorstore(
     chunks: Optional[List[Document]] = None,
     persist_dir: str = DEFAULT_PERSIST_DIR,
-    collection_name: str = COLLECTION_NAME
+    collection_name: str = COLLECTION_NAME,
+    reset: bool = True
 ) -> Chroma:
-    """Ingest document chunks into ChromaDB vectorstore."""
+    """Ingest document chunks into ChromaDB vectorstore.
+
+    Ingestion is idempotent by default. Chroma.from_documents() APPENDS to an
+    existing collection rather than replacing it, so without dropping first every
+    run stores another copy of all chunks. Repeated runs had grown the live
+    collection to 1323 vectors over only 21 distinct chunks. Duplicate points
+    collapse the HNSW graph into a degenerate clique -- traversal enters it and
+    cannot improve, so every query returns the same neighbours at an identical
+    distance regardless of what was asked.
+
+    Pass reset=False only to deliberately append to an existing collection.
+    """
     if chunks is None:
         docs = load_documents()
         chunks = split_documents(docs)
 
     embeddings = get_embeddings()
     logger.info(f"Initializing ChromaDB vectorstore at '{persist_dir}' with collection '{collection_name}'")
-    
+
+    if reset:
+        drop_collection(persist_dir, collection_name)
+
     vectorstore = Chroma.from_documents(
         documents=chunks,
         embedding=embeddings,
         collection_name=collection_name,
         persist_directory=persist_dir
     )
-    
+
     logger.info(f"Successfully ingested {len(chunks)} chunks into ChromaDB collection '{collection_name}'.")
     return vectorstore
 

@@ -24,8 +24,12 @@ def _summarize_if_long(data: List[Dict[str, Any]], max_items: int = 5) -> str:
     
     # Initialize LLM
     try:
-        model_name = os.environ.get("GEMINI_CHAT_MODEL", "gemini-1.5-flash")
-        llm = ChatGoogleGenerativeAI(model=model_name, temperature=0)
+        # Was defaulted to "gemini-1.5-flash", which the API does not serve --
+        # the except branch below then silently turned every summarisation into
+        # the truncated fallback. See src/model_config.py.
+        from src.model_config import chat_model
+
+        llm = ChatGoogleGenerativeAI(model=chat_model(), temperature=0)
         chain = load_summarize_chain(llm, chain_type="stuff")
         summary = chain.invoke(docs)
         return f"Summary of {len(data)} items: " + summary.get("output_text", str(summary))

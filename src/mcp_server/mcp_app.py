@@ -28,40 +28,59 @@ BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000/api/v1")
 mcp = FastMCP("Inventory Management Server")
 
 
-def _get(path: str, params: Optional[Dict[str, Any]] = None) -> Any:
-    """Helper to perform HTTP GET request against the Phase 1 backend."""
+def _send(send) -> Any:
+    """Run an authenticated request, refreshing the token once on a 401.
+
+    These three helpers used to send no `Authorization` header at all, which only
+    worked because the backend served unauthenticated callers as the admin user.
+    Now that authentication is enforced, the MCP tools authenticate as the shared
+    service account.
+
+    The retry exists because the cached token outlives nothing in particular: the
+    backend may have restarted with a different SECRET_KEY, or the token may have
+    aged past its 24h expiry mid-session. One forced re-login on a 401 handles
+    both without the client having to reason about expiry itself.
+    """
+    from src import service_auth
+
     try:
-        r = requests.get(f"{BASE_URL}{path}", params=params or {}, timeout=10)
+        r = send(service_auth.auth_headers())
+        if getattr(r, "status_code", None) == 401:
+            service_auth.invalidate()
+            r = send(service_auth.auth_headers(force_refresh=True))
         r.raise_for_status()
         return r.json()
     except requests.exceptions.ConnectionError:
         return {"error": "API unavailable"}
     except Exception as e:
         return {"error": str(e)}
+
+
+def _get(path: str, params: Optional[Dict[str, Any]] = None) -> Any:
+    """Helper to perform HTTP GET request against the Phase 1 backend."""
+    return _send(
+        lambda headers: requests.get(
+            f"{BASE_URL}{path}", params=params or {}, headers=headers, timeout=10
+        )
+    )
 
 
 def _post(path: str, payload: Dict[str, Any]) -> Any:
     """Helper to perform HTTP POST request against the Phase 1 backend."""
-    try:
-        r = requests.post(f"{BASE_URL}{path}", json=payload, timeout=10)
-        r.raise_for_status()
-        return r.json()
-    except requests.exceptions.ConnectionError:
-        return {"error": "API unavailable"}
-    except Exception as e:
-        return {"error": str(e)}
+    return _send(
+        lambda headers: requests.post(
+            f"{BASE_URL}{path}", json=payload, headers=headers, timeout=10
+        )
+    )
 
 
 def _patch(path: str, payload: Dict[str, Any]) -> Any:
     """Helper to perform HTTP PATCH request against the Phase 1 backend."""
-    try:
-        r = requests.patch(f"{BASE_URL}{path}", json=payload, timeout=10)
-        r.raise_for_status()
-        return r.json()
-    except requests.exceptions.ConnectionError:
-        return {"error": "API unavailable"}
-    except Exception as e:
-        return {"error": str(e)}
+    return _send(
+        lambda headers: requests.patch(
+            f"{BASE_URL}{path}", json=payload, headers=headers, timeout=10
+        )
+    )
 
 
 def _parse_id(val: Any, key_name: str = "id") -> Optional[int]:

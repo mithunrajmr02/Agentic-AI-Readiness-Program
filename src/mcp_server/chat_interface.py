@@ -79,12 +79,14 @@ class ChatSession:
 
 def build_chat_executor() -> AgentExecutor:
     """Constructs and returns the LangChain ReAct agent executor wired to FastMCP tools."""
-    api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY") or "dummy_key_for_test"
-    model_name = os.getenv("GEMINI_CHAT_MODEL", "gemini-3.6-flash")
+    # Model name and key resolution are centralised so the five call sites that
+    # read GEMINI_CHAT_MODEL cannot drift apart again. See src/model_config.py.
+    from src.model_config import api_key as resolve_api_key, chat_model
+
     llm = ChatGoogleGenerativeAI(
-        model=model_name,
+        model=chat_model(),
         temperature=0.1,
-        google_api_key=api_key
+        google_api_key=resolve_api_key()
     )
 
     tools = [
