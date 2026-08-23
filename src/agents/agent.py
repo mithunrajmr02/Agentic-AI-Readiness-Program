@@ -13,15 +13,27 @@ from src.agents.tools import (
     get_low_stock_alerts,
     create_purchase_order,
     get_supplier_info,
+    get_supplier_catalog,
+    get_dashboard_stats,
     rag_knowledge_base
 )
 
 logger = logging.getLogger("agent.core")
 
+# `run_agent` reports failure by returning a string rather than raising, so a caller
+# has no other way to tell an answer from an error. Naming the prefix here means the
+# UI can render a failure as a failure instead of letting it settle into the chat
+# transcript looking like something the agent concluded.
+AGENT_ERROR_PREFIX = "Error executing query:"
+
 def get_llm():
-    model_name = os.environ.get("GEMINI_CHAT_MODEL", "gemini-1.5-flash")
+    # Was `os.environ.get("GEMINI_CHAT_MODEL", "gemini-1.5-flash")`. That default
+    # names a model the API does not serve, so a clone without a .env failed here.
+    # See src/model_config.py.
+    from src.model_config import chat_model
+
     return ChatGoogleGenerativeAI(
-        model=model_name,
+        model=chat_model(),
         temperature=0.0
     )
 
@@ -38,6 +50,8 @@ def build_agent_executor() -> AgentExecutor:
         get_low_stock_alerts,
         create_purchase_order,
         get_supplier_info,
+        get_supplier_catalog,
+        get_dashboard_stats,
         rag_knowledge_base
     ]
 
@@ -67,7 +81,7 @@ def run_agent(query: str, agent_executor: Optional[AgentExecutor] = None) -> str
         return response.get("output", str(response))
     except Exception as e:
         logger.error(f"Agent execution failed: {e}")
-        return f"Error executing query: {str(e)}"
+        return f"{AGENT_ERROR_PREFIX} {str(e)}"
 
 
 if __name__ == "__main__":
