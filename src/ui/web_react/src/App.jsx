@@ -1,13 +1,162 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { 
-  Package, AlertTriangle, ShoppingCart, Truck, LayoutDashboard, 
-  Plus, RefreshCw, CheckCircle, ArrowDownRight, ArrowUpRight, Search
+import {
+  Package, AlertTriangle, ShoppingCart, Truck, LayoutDashboard,
+  Plus, RefreshCw, CheckCircle, ArrowDownRight, ArrowUpRight, Search, History, LogOut
 } from 'lucide-react';
 
-const API_BASE = 'http://localhost:8000/api/v1';
+// Was hardcoded to 'http://localhost:8000/api/v1', which also left the `/api`
+// proxy in vite.config.js dead code. An env override means the same build can be
+// pointed at a non-local backend without editing source.
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+
+const TOKEN_STORAGE_KEY = 'poc07.access_token';
+
+/**
+ * Attach the bearer token to every axios request.
+ *
+ * The backend now rejects unauthenticated requests -- it previously served them
+ * as the admin account, so this app worked while sending no credentials at all
+ * and every stock movement it recorded was attributed to "Admin" rather than to
+ * the person making it. Setting the default header rather than threading an
+ * axios instance through all eleven call sites keeps the change to the auth
+ * boundary instead of scattering it across the UI.
+ */
+function applyToken(token) {
+  if (token) {
+    axios.defaults.headers.common.Authorization = `Bearer ${token}`;
+    localStorage.setItem(TOKEN_STORAGE_KEY, token);
+  } else {
+    delete axios.defaults.headers.common.Authorization;
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
+  }
+}
+
+const storedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
+if (storedToken) applyToken(storedToken);
+
+/**
+ * Read the `sub` and `role` claims out of a token for display purposes only.
+ *
+ * Needed because a page reload restores the token from localStorage but not the
+ * in-memory identity, which would otherwise leave the header unable to say who
+ * is signed in. Deliberately not used for any access decision: the signature is
+ * not verified here and could not be safely verified in the browser. Every
+ * authorization judgement stays server-side, where the token is actually checked.
+ */
+function identityFromToken(token) {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return { email: payload.sub, role: payload.role };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Turn a FastAPI error response into something a store operator can act on.
+ *
+ * Pydantic validation failures (HTTP 422) put an *array* of error objects in
+ * `detail`, so the previous `err.response?.data?.detail || err.message` rendered
+ * them as "[object Object]". That matters now that StockMovementCreate rejects
+ * zero quantities and wrong-signed receipt/sale movements -- those are exactly
+ * the mistakes staff will make, and the reason has to reach the screen.
+ */
+function describeApiError(err) {
+  const detail = err.response?.data?.detail;
+  if (Array.isArray(detail)) {
+    return detail.map(d => d.msg?.replace(/^Value error,\s*/, '') || JSON.stringify(d)).join('\n');
+  }
+  if (typeof detail === 'string') return detail;
+  return err.message || 'Unknown error';
+}
+
+function LoginScreen({ onAuthenticated }) {
+  const [email, setEmail] = useState('admin@retail.com');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState(null);
+  const [busy, setBusy] = useState(false);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      // OAuth2PasswordRequestForm expects form encoding, not JSON.
+      const body = new URLSearchParams({ username: email, password });
+      const res = await axios.post(`${API_BASE}/auth/login`, body, {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+      });
+      onAuthenticated(res.data.access_token, email);
+    } catch (err) {
+      setError(
+        err.response?.status === 401
+          ? 'Incorrect email or password.'
+          : `Could not reach the API: ${describeApiError(err)}`
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div style={{
+      minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: '#0f172a'
+    }}>
+      <form onSubmit={submit} style={{
+        background: '#fff', padding: '2.5rem', borderRadius: '12px', width: '380px',
+        boxShadow: '0 20px 45px rgba(0,0,0,0.35)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+          <div className="brand-icon">P7</div>
+          <div>
+            <div style={{ fontWeight: 700 }}>Retail Inventory</div>
+            <div style={{ fontSize: '0.8rem', color: '#64748b' }}>POC-07 Platform — sign in</div>
+          </div>
+        </div>
+
+        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+          Email
+        </label>
+        <input
+          type="email" value={email} required autoComplete="username"
+          onChange={(e) => setEmail(e.target.value)}
+          style={{ width: '100%', padding: '0.6rem', marginBottom: '1rem', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+        />
+
+        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+          Password
+        </label>
+        <input
+          type="password" value={password} required autoComplete="current-password"
+          onChange={(e) => setPassword(e.target.value)}
+          style={{ width: '100%', padding: '0.6rem', marginBottom: '1.25rem', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+        />
+
+        {error && (
+          <div style={{
+            background: '#fef2f2', color: '#991b1b', padding: '0.7rem', borderRadius: '6px',
+            fontSize: '0.85rem', marginBottom: '1rem', whiteSpace: 'pre-line'
+          }}>
+            {error}
+          </div>
+        )}
+
+        <button type="submit" className="btn btn-primary" disabled={busy} style={{ width: '100%', justifyContent: 'center' }}>
+          {busy ? 'Signing in…' : 'Sign in'}
+        </button>
+      </form>
+    </div>
+  );
+}
 
 export default function App() {
+  const [token, setToken] = useState(() => localStorage.getItem(TOKEN_STORAGE_KEY));
+  const [currentUser, setCurrentUser] = useState(() => {
+    const existing = localStorage.getItem(TOKEN_STORAGE_KEY);
+    return existing ? identityFromToken(existing) : null;
+  });
   const [activeTab, setActiveTab] = useState('dashboard');
   const [dashboard, setDashboard] = useState(null);
   const [products, setProducts] = useState([]);
@@ -22,6 +171,15 @@ export default function App() {
   const [showPOModal, setShowPOModal] = useState(false);
   const [showSupplierModal, setShowSupplierModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+
+  // US-07-P1-07 (Raj Patel, stock auditor): movement history.
+  // Held separately from `selectedProduct` because the history modal shows the
+  // *detail* payload fetched from GET /products/{id} -- the list rows in
+  // `products` no longer carry `movements` at all.
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [historyProduct, setHistoryProduct] = useState(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState(null);
 
   // Form states
   const [newProduct, setNewProduct] = useState({
@@ -56,14 +214,31 @@ export default function App() {
       setSuppliers(suppRes.data);
     } catch (err) {
       console.error('Error fetching inventory data:', err);
+      // An expired or revoked token must return the operator to the sign-in
+      // screen rather than leaving them on an empty dashboard with a console
+      // error they will never see.
+      if (err.response?.status === 401) signOut();
     } finally {
       setLoading(false);
     }
   };
 
+  const signIn = (accessToken, email) => {
+    applyToken(accessToken);
+    setToken(accessToken);
+    setCurrentUser(identityFromToken(accessToken) || { email });
+  };
+
+  const signOut = () => {
+    applyToken(null);
+    setToken(null);
+    setCurrentUser(null);
+  };
+
   useEffect(() => {
+    if (!token) return;
     fetchData();
-  }, []);
+  }, [token]);
 
   const handleCreateProduct = async (e) => {
     e.preventDefault();
@@ -79,7 +254,7 @@ export default function App() {
       setShowProductModal(false);
       fetchData();
     } catch (err) {
-      alert('Failed to create product: ' + (err.response?.data?.detail || err.message));
+      alert('Failed to create product: ' + describeApiError(err));
     }
   };
 
@@ -96,7 +271,7 @@ export default function App() {
       setShowStockModal(false);
       fetchData();
     } catch (err) {
-      alert('Failed to update stock: ' + (err.response?.data?.detail || err.message));
+      alert('Failed to update stock: ' + describeApiError(err));
     }
   };
 
@@ -116,7 +291,7 @@ export default function App() {
       setShowPOModal(false);
       fetchData();
     } catch (err) {
-      alert('Failed to create PO: ' + (err.response?.data?.detail || err.message));
+      alert('Failed to create PO: ' + describeApiError(err));
     }
   };
 
@@ -131,7 +306,7 @@ export default function App() {
       setShowSupplierModal(false);
       fetchData();
     } catch (err) {
-      alert('Failed to create supplier: ' + (err.response?.data?.detail || err.message));
+      alert('Failed to create supplier: ' + describeApiError(err));
     }
   };
 
@@ -140,9 +315,38 @@ export default function App() {
       await axios.patch(`${API_BASE}/orders/${orderId}/receive`);
       fetchData();
     } catch (err) {
-      alert('Failed to receive PO: ' + (err.response?.data?.detail || err.message));
+      alert('Failed to receive PO: ' + describeApiError(err));
     }
   };
+
+  /**
+   * US-07-P1-07 — "As Raj Patel, I want to review stock movement history for any
+   * product, so that I can audit inventory changes."
+   *
+   * Hits GET /products/{id}, which is the route the user story names. The
+   * collection endpoints deliberately omit `movements`, so the ledger has to be
+   * fetched per product on demand rather than read off the already-loaded row.
+   */
+  const handleViewHistory = async (product) => {
+    setShowHistoryModal(true);
+    setHistoryProduct(null);
+    setHistoryError(null);
+    setHistoryLoading(true);
+    try {
+      const res = await axios.get(`${API_BASE}/products/${product.id}`, {
+        params: { movement_limit: 50 }
+      });
+      setHistoryProduct(res.data);
+    } catch (err) {
+      setHistoryError(describeApiError(err));
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  if (!token) {
+    return <LoginScreen onAuthenticated={signIn} />;
+  }
 
   return (
     <div className="app-container">
@@ -214,13 +418,29 @@ export default function App() {
             <button className="btn btn-outline" onClick={fetchData}>
               <RefreshCw size={16} /> Refresh
             </button>
+            {/* This badge previously read "Priya Sharma / Store Manager" as static
+                text regardless of who was using the app -- and there was no sign-in
+                at all, so there was no real identity it could have shown. It now
+                reflects the account whose token is actually being sent, which is
+                the same identity the backend stamps onto stock movements. */}
             <div className="user-badge">
-              <div className="user-avatar">PS</div>
+              <div className="user-avatar">
+                {(currentUser?.email || '?').slice(0, 2).toUpperCase()}
+              </div>
               <div>
-                <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>Priya Sharma</div>
-                <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Store Manager</div>
+                <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>
+                  {currentUser?.email || 'Signed in'}
+                </div>
+                <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                  {currentUser?.role
+                    ? `${currentUser.role.charAt(0).toUpperCase()}${currentUser.role.slice(1)}`
+                    : 'Authenticated session'}
+                </div>
               </div>
             </div>
+            <button className="btn btn-outline" onClick={signOut} title="Sign out">
+              <LogOut size={16} /> Sign out
+            </button>
           </div>
         </header>
 
@@ -290,7 +510,10 @@ export default function App() {
                 <tbody>
                   {products.map(p => {
                     const avail = p.stock_level?.quantity_available ?? 0;
-                    const isOut = avail === 0;
+                    // <= 0, not === 0: quantity_available is an unclamped
+                    // on_hand - reserved, so an oversold product is negative and
+                    // is out of stock, not merely low.
+                    const isOut = avail <= 0;
                     const isLow = avail <= p.reorder_point;
                     return (
                       <tr key={p.id}>
@@ -312,16 +535,26 @@ export default function App() {
                           )}
                         </td>
                         <td>
-                          <button 
-                            className="btn btn-outline" 
-                            style={{ padding: '0.35rem 0.65rem', fontSize: '0.8rem' }}
-                            onClick={() => {
-                              setSelectedProduct(p);
-                              setShowStockModal(true);
-                            }}
-                          >
-                            Update Stock
-                          </button>
+                          <div style={{ display: 'flex', gap: '0.4rem' }}>
+                            <button
+                              className="btn btn-outline"
+                              style={{ padding: '0.35rem 0.65rem', fontSize: '0.8rem' }}
+                              onClick={() => {
+                                setSelectedProduct(p);
+                                setShowStockModal(true);
+                              }}
+                            >
+                              Update Stock
+                            </button>
+                            <button
+                              className="btn btn-outline"
+                              style={{ padding: '0.35rem 0.65rem', fontSize: '0.8rem' }}
+                              title={`Audit stock movement history for ${p.sku}`}
+                              onClick={() => handleViewHistory(p)}
+                            >
+                              <History size={14} /> History
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -361,7 +594,7 @@ export default function App() {
                       <td>{p.reorder_point}</td>
                       <td>{p.reorder_quantity}</td>
                       <td>
-                        {p.stock_level?.quantity_available === 0 ? (
+                        {(p.stock_level?.quantity_available ?? 0) <= 0 ? (
                           <span className="badge badge-danger">CRITICAL: OUT OF STOCK</span>
                         ) : (
                           <span className="badge badge-warning">WARNING: LOW STOCK</span>
@@ -396,7 +629,7 @@ export default function App() {
                 <thead>
                   <tr>
                     <th>PO Number</th>
-                    <th>Supplier ID</th>
+                    <th>Supplier</th>
                     <th>Order Date</th>
                     <th>Expected Delivery</th>
                     <th>Total Amount</th>
@@ -405,10 +638,27 @@ export default function App() {
                   </tr>
                 </thead>
                 <tbody>
-                  {orders.map(po => (
+                  {orders.map(po => {
+                    // Look the supplier up instead of synthesising a code from the
+                    // numeric id. `SUP-000${po.supplier_id}` only coincides with
+                    // the real supplier_code while ids and codes happen to run in
+                    // lockstep, and they do not: the seed fixture
+                    // (src/backend/seed_demo_data.py) issues SUP-0001, SUP-0002,
+                    // SUP-0003 and SUP-0005, so supplier id 4 is SUP-0005 and
+                    // PO-2026-0001 was being attributed on screen to a vendor that
+                    // never supplied it. Supplier codes come from a vendor master
+                    // in any real deployment and are not row ids.
+                    const supplier = suppliers.find(s => s.id === po.supplier_id);
+                    return (
                     <tr key={po.id}>
                       <td><strong>{po.po_number}</strong></td>
-                      <td>SUP-000{po.supplier_id}</td>
+                      <td>
+                        {supplier
+                          ? <><strong>{supplier.supplier_code}</strong> — {supplier.name}</>
+                          : <span title={`Supplier id ${po.supplier_id} not found`}>
+                              #{po.supplier_id} (unknown)
+                            </span>}
+                      </td>
                       <td>{po.order_date}</td>
                       <td>{po.expected_delivery || 'N/A'}</td>
                       <td>₹{po.total_amount.toLocaleString('en-IN')}</td>
@@ -432,7 +682,8 @@ export default function App() {
                         )}
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -634,6 +885,92 @@ export default function App() {
                 <button type="submit" className="btn btn-primary">Update Stock</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal 2b: Stock Movement History — US-07-P1-07 (audit trail) */}
+      {showHistoryModal && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '900px' }}>
+            <div className="modal-header">
+              <div className="modal-title">
+                Stock Movement History{historyProduct ? `: ${historyProduct.sku}` : ''}
+              </div>
+              <button className="close-btn" onClick={() => setShowHistoryModal(false)}>&times;</button>
+            </div>
+
+            {historyLoading && <p style={{ padding: '1rem 0' }}>Loading movement ledger…</p>}
+
+            {historyError && (
+              <p style={{ padding: '1rem 0', color: '#dc2626' }}>
+                Could not load movement history: {historyError}
+              </p>
+            )}
+
+            {historyProduct && !historyLoading && (
+              <>
+                <p style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '1rem' }}>
+                  {historyProduct.name} — on hand{' '}
+                  <strong>{historyProduct.stock_level?.quantity_on_hand ?? 0}</strong>,
+                  reserved <strong>{historyProduct.stock_level?.quantity_reserved ?? 0}</strong>,
+                  available <strong>{historyProduct.stock_level?.quantity_available ?? 0}</strong>{' '}
+                  {historyProduct.unit_of_measure}. Showing the 50 most recent movements, newest first.
+                </p>
+
+                {(historyProduct.movements?.length ?? 0) === 0 ? (
+                  <p style={{ padding: '1rem 0', color: '#64748b' }}>
+                    No stock movements recorded for this product yet.
+                  </p>
+                ) : (
+                  // Capped and scrollable: at the 50-row default the ledger is
+                  // ~5000px tall, which pushes the Close button off-screen and
+                  // makes the modal unusable. `.modal-content` sets no max-height.
+                  <div className="table-responsive" style={{ maxHeight: '55vh', overflowY: 'auto' }}>
+                    <table className="custom-table">
+                      <thead>
+                        <tr>
+                          <th>Recorded At</th>
+                          <th>Type</th>
+                          <th>Quantity</th>
+                          <th>Reference</th>
+                          <th>Notes</th>
+                          <th>Recorded By</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {historyProduct.movements.map(m => {
+                          const isIn = m.quantity > 0;
+                          return (
+                            <tr key={m.id}>
+                              <td style={{ whiteSpace: 'nowrap' }}>
+                                {m.recorded_at ? new Date(m.recorded_at).toLocaleString() : '—'}
+                              </td>
+                              <td><span className="badge badge-primary">{m.movement_type}</span></td>
+                              <td>
+                                <strong style={{ color: isIn ? '#16a34a' : '#dc2626' }}>
+                                  {isIn ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+                                  {isIn ? `+${m.quantity}` : m.quantity}
+                                </strong>
+                              </td>
+                              <td>{m.reference_number || '—'}</td>
+                              <td>{m.notes || '—'}</td>
+                              <td>{m.recorded_by || '—'}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </>
+            )}
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
+              <button type="button" className="btn btn-outline" onClick={() => setShowHistoryModal(false)}>
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
