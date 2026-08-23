@@ -77,7 +77,7 @@ flowchart TD
 
 #### 2. [`models.py`](file:///c:/Users/2mrmi/OneDrive/Documents/github-clone/Agentic-AI-Readiness-Program/phase1/app/models.py)
 - **`Product`**: Represents retail inventory items (`id`, `sku`, `name`, `category`, `unit_price`, `cost_price`, `reorder_point`, `supplier_id`).
-- **`StockLevel`**: 1-to-1 relationship with `Product` tracking `quantity_on_hand` and `quantity_reserved`. Includes the calculated property `quantity_available` (`max(0, on_hand - reserved)`).
+- **`StockLevel`**: 1-to-1 relationship with `Product` tracking `quantity_on_hand` and `quantity_reserved`. Includes the calculated property `quantity_available` (`on_hand - reserved`). The subtraction is deliberately **not** clamped at zero: `inventory_manual.md` Section 15 documents negative stock as a real, recoverable state ("Stock level shows negative … Fix: record a positive StockMovement(adjustment)"), so it must stay visible to operators rather than being masked as `0`.
 - **`StockMovement`**: Audit ledger for all inventory changes (`receipt`, `sale`, `adjustment`, `transfer`, `return`).
 - **`PurchaseOrder`**: Represents procurement orders (`id`, `po_number`, `supplier_id`, `status`, `total_amount`, `order_date`, `expected_delivery`).
 - **`POItem`**: Line items belonging to a purchase order.

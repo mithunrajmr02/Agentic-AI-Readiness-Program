@@ -18,9 +18,9 @@ This log tracks developer decisions, architecture choices, bug fixes, implementa
   - Categories & Prefixes: `grocery` -> `GRO`, `electronics` -> `ELC`, `clothing` -> `CLO`, `household` -> `HHD`, `personal_care` -> `PRC`.
 - **PO Number Auto-Generation**: `PO-{YEAR}-{NNNN}` (e.g. `PO-2026-0042`).
 - **Stock Logic**:
-  - `quantity_available` = `max(0, quantity_on_hand - quantity_reserved)`
-  - Trigger `low_stock` alert when `quantity_available <= reorder_point`
-  - Trigger `out_of_stock` alert when `quantity_available == 0`
+  - `quantity_available` = `quantity_on_hand - quantity_reserved` (a plain subtraction, **not** clamped at 0 — see the note below)
+  - Trigger `low_stock` alert when `0 < quantity_available <= reorder_point`
+  - Trigger `out_of_stock` alert when `quantity_available <= 0`
 - **PO Receive Logic**:
   - `PATCH /api/v1/orders/{id}/receive` updates PO status to `received`.
   - Creates `StockMovement` (type `receipt`) per line item.

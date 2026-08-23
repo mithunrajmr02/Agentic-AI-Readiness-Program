@@ -29,6 +29,9 @@ The analysis was performed against the local SonarQube LTS Community instance (`
 ## Analysis Summary & Verification Details
 - **Scanner Engine:** SonarScanner CLI 8.0.1 on Linux WSL2 / Docker.
 - **SonarQube Server:** SonarQube LTS Community 9.9.8.
-- **Authentication:** Admin authenticated via User Token (`squ_834b4c49c6bf3d84a9ba956359bdb4b5af534423`).
+- **Authentication:** Admin authenticated via a SonarQube User Token, supplied to the
+  scanner through the `SONAR_TOKEN` environment variable. The token value is
+  deliberately not reproduced here -- it was previously pasted into this line in
+  full, which published a live credential to the repository.
 - **Test Coverage:** Cobertura format generated via `pytest --cov=src.mcp_server --cov-report=xml:coverage.xml`.
 - **Zero Critical Vulnerabilities:** Zero bugs, zero security vulnerabilities, and zero security hotspots detected across all Phase 4 MCP server and agent modules.
