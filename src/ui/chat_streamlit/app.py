@@ -35,7 +35,7 @@ try:
     # `start_app.py` runs the backend and this dashboard as separate processes, so
     # the two configurations never met and the app worked. They meet the moment
     # anything imports both into one process, which is exactly what
-    # phase3/tests/test_ui_integration.py does. Stating the full configuration makes
+    # tests/phase3/test_ui_integration.py does. Stating the full configuration makes
     # it order-independent instead of relying on that separation holding.
     #
     # The renderer matches the backend's (JSON, sorted keys) so the dashboard's

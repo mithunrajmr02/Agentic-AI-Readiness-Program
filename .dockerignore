@@ -1,7 +1,7 @@
 # Keeps the build context small and prevents host-specific or secret files from
 # being baked into the image. Without this, `COPY . .` in the Dockerfile pulls in
-# phase1/venv (a full site-packages tree), node_modules, the Chroma vector store
-# and the .git history -- hundreds of megabytes, and a copy of any local .env.
+# any local virtualenv (a full site-packages tree), node_modules, the Chroma vector
+# store and the .git history -- hundreds of megabytes, and a copy of any local .env.
 
 # Secrets and local config
 .env

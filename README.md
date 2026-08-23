@@ -1,165 +1,155 @@
 # 📦 Retail Inventory Management & Procurement System (POC-07)
-### Agentic AI Readiness Program — Enterprise Architecture & Code Documentation
+### Agentic AI Readiness Program — application, tests and phase submissions
 
-![Python Version](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue.svg)
+![Python Version](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.14-blue.svg)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.100%2B-009688.svg)
-![LangChain](https://img.shields.io/badge/LangChain-ReAct%20Agent-orange.svg)
+![LangChain](https://img.shields.io/badge/LangChain-ReAct%20%26%20LangGraph-orange.svg)
 ![Gemini](https://img.shields.io/badge/Google%20Gemini-Flash%20%26%20Embeddings-8E75B2.svg)
 ![SonarQube](https://img.shields.io/badge/SonarQube-Quality%20Gate%20Passed-4E9BCD.svg)
-![Coverage](https://img.shields.io/badge/Coverage-91%25%20%2B-brightgreen.svg)
 
 ---
 
-## 🌟 Executive Overview
-**POC-07** is an end-to-end retail supply chain and inventory management platform that evolves across 5 distinct modernization phases:
-1. **Phase 1: Full-Stack CRUD & Database Engine** — RESTful API built with FastAPI, SQLAlchemy 2.0 ORM, SQLite with Foreign Key constraints, JWT authentication, and structured `structlog` telemetry.
-2. **Phase 2: Enterprise RAG Knowledge Base** — Retrieval-Augmented Generation utilizing ChromaDB vector store, Google Generative AI Embeddings (`gemini-embedding-2`), Gemini Flash LLMs, and OpenTelemetry/LangSmith tracing.
-3. **Phase 3: Autonomous ReAct Decision Agent** — LangChain ReAct agent equipped with context engineering, automatic output summarization, and custom REST API & RAG tool bindings.
-4. **Phase 4: MCP (Model Context Protocol) Server & Chat Interface** — Standardized tool exposure and interactive AI interfaces.
-5. **Phase 5: Multi-Agent Collaboration Engine** — Supervisor-worker multi-agent coordination for complex supply chain replenishment workflows.
+## 🌟 What this is
+
+One inventory-management application. It grew through the programme's five phases,
+but it ships as a single system — the phases are capability layers inside it, not
+separate deployables:
+
+| Phase | Capability | Where it lives |
+|---|---|---|
+| P1 | Full-stack CRUD: FastAPI + SQLAlchemy 2.0 + SQLite, JWT auth, `structlog` telemetry, React operator SPA | `src/backend/`, `src/ui/web_react/` |
+| P2 | RAG knowledge base: ChromaDB + Google embeddings over the inventory manual | `src/rag/` |
+| P3 | ReAct decision agent: 7 tools over the live REST API plus a RAG bridge | `src/agents/` |
+| P4 | MCP server and chat interface: the same operations exposed as MCP tools | `src/mcp_server/` |
+| P5 | Multi-agent replenishment workflow on LangGraph | `src/agents/multi_agent/` |
+
+Every layer talks to the same running backend and the same database. Nothing is
+mocked or simulated at runtime.
 
 ---
 
-## 📂 Repository Layout
+## 📂 Repository layout
 
 ```
 Agentic-AI-Readiness-Program/
 │
-├── README.md                           # Master Project Documentation & Quickstart
-├── DEVLOG.md                           # Chronological Engineering & Bug Fix Log
-├── verify_all_phases.py                # Unified Multi-Phase Smoke & Test Runner
+├── start_app.py                 # single-command launcher for all three services
+├── requirements.txt
+├── pytest.ini
+├── Dockerfile / docker-compose.yml / .dockerignore
+├── .env.example                 # every variable the code actually reads
 │
-├── phase1/                             # Phase 1: Full-Stack CRUD Application
-│   ├── app/
-│   │   ├── main.py                     # FastAPI Application Initialization & Middleware
-│   │   ├── database.py                 # SQLAlchemy Engine, SessionLocal, PRAGMA setup
-│   │   ├── models.py                   # Relational DB Models (Product, StockLevel, etc.)
-│   │   ├── schemas.py                  # Pydantic v2 ConfigDict Request/Response Models
-│   │   ├── logging_config.py           # Structured JSON Logging (structlog)
-│   │   ├── services/
-│   │   │   └── inventory_service.py    # Core Business Logic (SKU/PO gen, alerts, receive)
-│   │   └── routers/
-│   │       ├── auth.py                 # JWT Authentication & User Registration
-│   │       └── inventory.py            # REST Endpoints for Products, POs, Suppliers
-│   ├── frontend/                       # React 18 + Vite Web Dashboard
-│   ├── tests/                          # 20 Pytest Unit, API & DB Persistence Tests
-│   └── submission/                     # SonarQube & Pytest XML Artifacts
+├── src/                         # THE APPLICATION -- the only runtime source tree
+│   ├── backend/                 # FastAPI app, ORM models, schemas, services, routers
+│   │   ├── main.py              #   app factory, middleware, exception handlers
+│   │   ├── models.py            #   Product, StockLevel, PurchaseOrder, Supplier, ...
+│   │   ├── services/            #   SKU/PO generation, stock alerts, PO receipt
+│   │   ├── routers/             #   auth.py (JWT), inventory.py (REST endpoints)
+│   │   └── seed_demo_data.py    #   idempotent demo dataset
+│   ├── rag/                     # ingest.py, rag_chain.py, data/inventory_manual.md
+│   ├── agents/                  # ReAct agent: agent.py, tools.py, prompts.py, summarizer.py
+│   │   └── multi_agent/         #   LangGraph state, agents and graph
+│   ├── mcp_server/              # FastMCP tool server + LangChain chat interface
+│   ├── ui/
+│   │   ├── web_react/           #   React + Vite operator dashboard (port 3000)
+│   │   └── chat_streamlit/      #   Streamlit AI dashboard: MCP / ReAct / RAG / multi-agent
+│   ├── model_config.py          # one place resolving Gemini model names
+│   └── service_auth.py          # shared service-account login for non-browser clients
 │
-├── phase2/                             # Phase 2: RAG Application
-│   ├── rag/
-│   │   ├── inventory_manual.md         # 15-Section Standard Operating Procedure Manual
-│   │   ├── ingest.py                   # Vector Store Ingestion & Google Embeddings
-│   │   ├── rag_chain.py                # RetrievalQA LangChain Pipeline with Tracing
-│   │   └── app.py                      # Streamlit Interactive Knowledge Assistant
-│   ├── chroma_db/                      # Persistent ChromaDB Vector Store
-│   ├── tests/                          # Automated RAG Retrieval & Prompt Unit Tests
-│   ├── verify_rag.py                   # Live CLI Verification Script
-│   └── submission/                     # Quality Reports & Dashboard Screenshots
+├── tests/                       # the five graded suites (232 tests)
+│   ├── conftest.py              #   puts the repo root on sys.path for `src.*`
+│   └── phase1/ … phase5/
 │
-└── phase3/                             # Phase 3: Autonomous ReAct Agent
-    ├── agent/
-    │   ├── agent.py                    # LangChain ReAct Agent Initialization & Runner
-    │   ├── tools.py                    # 5 Agent Tools (API integration & RAG bridge)
-    │   ├── summarizer.py               # Document & List Summarization Middleware
-    │   └── prompts.py                  # Structured System Prompts & Guardrails
-    ├── run_agent.py                    # Interactive CLI Terminal for ReAct Agent
-    ├── tests/                          # 21 Pytest Test Cases (91% Line Coverage)
-    ├── generate_submission_artifacts.py# Automated Report & XML Exporter
-    └── submission/
-        ├── MY_SCORES.md                # Phase 3 Score Breakdown
-        ├── TEST_REPORT.md              # Detailed Test Execution Summary
-        ├── SONARQUBE_REPORT.md         # SonarQube Metric Evidence
-        └── sonarqube_ss-phase3.png     # Real SonarQube Dashboard Screenshot
+├── submissions/                 # per-phase deliverables: scores, reports, XML, screenshots
+│   └── phase1/ … phase5/
+│
+├── docs/
+│   ├── ARCHITECTURE_AND_CODE_GUIDE.md   # architecture and function-level walkthrough
+│   ├── RUN_GUIDE.md                     # step-by-step operational guide
+│   ├── DEVLOG.md                        # chronological engineering and bug-fix log
+│   └── program/                         # the programme's own briefs, rubric and test specs
+│
+└── scripts/
+    ├── verify_rag.py            # live RAG retrieval smoke queries
+    └── agent_cli.py             # interactive ReAct agent terminal
 ```
+
+`src/` has no dependency on `tests/`, `submissions/` or `docs/`; the application
+runs from `src/` alone.
 
 ---
 
-## 🔍 In-Depth Technical Walkthrough
+## 🚀 Running it
 
-### 1. Phase 1 — Data Model & Service Layer
-Located in [`phase1/app/`](file:///c:/Users/2mrmi/OneDrive/Documents/github-clone/Agentic-AI-Readiness-Program/phase1/app):
-
-| Component / Function | File | Description & Behavior |
-|---|---|---|
-| `generate_sku(category, db)` | [`inventory_service.py`](file:///c:/Users/2mrmi/OneDrive/Documents/github-clone/Agentic-AI-Readiness-Program/phase1/app/services/inventory_service.py) | Formats SKU as `SKU-{PREFIX}-{NNNN}` using category prefixes (`GRO`, `ELC`, `CLO`, `HHD`, `PRC`). |
-| `generate_po_number(db)` | [`inventory_service.py`](file:///c:/Users/2mrmi/OneDrive/Documents/github-clone/Agentic-AI-Readiness-Program/phase1/app/services/inventory_service.py) | Formats Purchase Order numbers as `PO-{YEAR}-{NNNN}` (e.g. `PO-2026-0001`). |
-| `check_stock_alerts(product, stock, db)` | [`inventory_service.py`](file:///c:/Users/2mrmi/OneDrive/Documents/github-clone/Agentic-AI-Readiness-Program/phase1/app/services/inventory_service.py) | Calculates `quantity_available` (`quantity_on_hand - quantity_reserved`). Triggers `low_stock` or `out_of_stock` alerts and auto-resolves existing alerts when stock recovers. |
-| `receive_purchase_order(po_id, db)` | [`inventory_service.py`](file:///c:/Users/2mrmi/OneDrive/Documents/github-clone/Agentic-AI-Readiness-Program/phase1/app/services/inventory_service.py) | Transitions PO to `received`, increases inventory stock on hand, logs `StockMovement` (type `receipt`), and clears active alerts. |
-| `get_dashboard_data(db)` | [`inventory_service.py`](file:///c:/Users/2mrmi/OneDrive/Documents/github-clone/Agentic-AI-Readiness-Program/phase1/app/services/inventory_service.py) | Computes total valuation (`quantity_on_hand * cost_price`), out of stock count, and open PO count. |
-
-### 2. Phase 2 — RAG Knowledge Pipeline
-Located in [`phase2/rag/`](file:///c:/Users/2mrmi/OneDrive/Documents/github-clone/Agentic-AI-Readiness-Program/phase2/rag):
-
-| Component / Function | File | Description & Behavior |
-|---|---|---|
-| `ingest_documents()` | [`ingest.py`](file:///c:/Users/2mrmi/OneDrive/Documents/github-clone/Agentic-AI-Readiness-Program/phase2/rag/ingest.py) | Reads `inventory_manual.md`, applies `MarkdownHeaderTextSplitter` + `RecursiveCharacterTextSplitter` (chunk size: 800, overlap: 100), generates vectors using `GoogleGenerativeAIEmbeddings`, and stores them in ChromaDB. |
-| `build_rag_chain()` | [`rag_chain.py`](file:///c:/Users/2mrmi/OneDrive/Documents/github-clone/Agentic-AI-Readiness-Program/phase2/rag/rag_chain.py) | Constructs a LangChain `RetrievalQA` pipeline with custom `INVENTORY_RAG_PROMPT` and `ChatGoogleGenerativeAI`. |
-| `ask_question(query)` | [`rag_chain.py`](file:///c:/Users/2mrmi/OneDrive/Documents/github-clone/Agentic-AI-Readiness-Program/phase2/rag/rag_chain.py) | Queries the vector store with k=4, executes the prompt, records telemetry in OpenTelemetry/LangSmith, and returns answers with source documents. |
-
-### 3. Phase 3 — Autonomous ReAct Agent & Tools
-Located in [`phase3/agent/`](file:///c:/Users/2mrmi/OneDrive/Documents/github-clone/Agentic-AI-Readiness-Program/phase3/agent):
-
-| Tool / Function | File | Description & Behavior |
-|---|---|---|
-| `get_product_stock(sku)` | [`tools.py`](file:///c:/Users/2mrmi/OneDrive/Documents/github-clone/Agentic-AI-Readiness-Program/phase3/agent/tools.py) | Fetches real-time quantity on hand, unit cost, and category from `GET /api/v1/products`. |
-| `get_low_stock_alerts()` | [`tools.py`](file:///c:/Users/2mrmi/OneDrive/Documents/github-clone/Agentic-AI-Readiness-Program/phase3/agent/tools.py) | Fetches products at or below reorder threshold from `GET /api/v1/stock/low-alerts` and applies `_summarize_if_long` to prevent LLM context explosion. |
-| `create_purchase_order(...)` | [`tools.py`](file:///c:/Users/2mrmi/OneDrive/Documents/github-clone/Agentic-AI-Readiness-Program/phase3/agent/tools.py) | Validates supplier codes, resolves SKU-to-ID mappings, auto-computes expected delivery date from supplier lead time, and raises a formal PO via `POST /api/v1/orders`. |
-| `get_supplier_info(code)` | [`tools.py`](file:///c:/Users/2mrmi/OneDrive/Documents/github-clone/Agentic-AI-Readiness-Program/phase3/agent/tools.py) | Retrieves lead times, payment terms, and status for suppliers from `GET /api/v1/suppliers`. |
-| `rag_knowledge_base(query)` | [`tools.py`](file:///c:/Users/2mrmi/OneDrive/Documents/github-clone/Agentic-AI-Readiness-Program/phase3/agent/tools.py) | Direct bridge to Phase 2 `ask_question()` for policy, formula, and manual inquiries. |
-| `_summarize_if_long(data)` | [`summarizer.py`](file:///c:/Users/2mrmi/OneDrive/Documents/github-clone/Agentic-AI-Readiness-Program/phase3/agent/summarizer.py) | Condenses long response arrays using Gemini Flash summarize chains or safe fallback truncation. |
-| `run_agent(query)` | [`agent.py`](file:///c:/Users/2mrmi/OneDrive/Documents/github-clone/Agentic-AI-Readiness-Program/phase3/agent/agent.py) | Executes multi-step ReAct thought-action-observation cycles to fulfill natural language user objectives. |
-
----
-
-## 🚀 How to Run the Entire System
-
-### 1. Environment Setup
-```powershell
-# Activate Python Virtual Environment
-. .\phase1\venv\Scripts\Activate.ps1
-
-# Configure Environment Variables (.env)
-DATABASE_URL=sqlite:///./inventory.db
-GOOGLE_API_KEY=your_google_ai_studio_key
-GEMINI_API_KEY=your_google_ai_studio_key
-GEMINI_CHAT_MODEL=gemini-1.5-flash
-GEMINI_EMBEDDING_MODEL=models/gemini-embedding-2
-```
-
-### 2. Quick Execution Commands (Unified `src/` Architecture)
-
-> 📖 **Comprehensive Step-by-Step Guide:** For complete operational instructions, see [RUN_GUIDE.md](file:///c:/Users/2mrmi/OneDrive/Documents/github-clone/Agentic-AI-Readiness-Program/RUN_GUIDE.md).
+### 1. Setup
 
 ```bash
-# 🟢 Start FastAPI Backend REST API
-uvicorn src.backend.main:app --reload --port 8000
-# (Docs at: http://127.0.0.1:8000/docs)
-
-# 📚 Run RAG Ingestion Pipeline (ChromaDB)
-python -m src.rag.ingest
-
-# 💬 Launch Streamlit AI Knowledge Assistant
-streamlit run src/ui/chat_streamlit/app.py
-
-# 🤖 Execute LangChain ReAct Agent (CLI)
-python -m src.agents.agent "Check stock for SKU-GRO-0001"
-
-# 💻 Launch React Frontend Dashboard
-cd src/ui/web_react && npm run dev
-
-# 🧪 Run Unified Multi-Phase Test Suite
-python verify_all_phases.py
-
-# 🐳 Run with Docker Compose
-docker-compose up -d
+pip install -r requirements.txt
 ```
+
+Copy `.env.example` to `.env` and fill in `GOOGLE_API_KEY` (an AI Studio key) plus
+`SECRET_KEY`. Everything else has a working default.
+
+### 2. First run on a fresh clone
+
+```bash
+python start_app.py --seed --ingest
+```
+
+That seeds the demo dataset, builds the RAG vector store, then starts:
+
+- FastAPI backend — http://localhost:8000 (OpenAPI docs at `/docs`)
+- React operator SPA — http://localhost:3000
+- Streamlit AI dashboard — http://localhost:8501
+
+Afterwards `python start_app.py` is enough. `--no-web` and `--no-dashboard` skip
+individual services. Default login: `admin@retail.com` / `admin`.
+
+### 3. Individual pieces
+
+```bash
+uvicorn src.backend.main:app --reload --port 8000
+```
+
+```bash
+python -m src.rag.ingest
+```
+
+```bash
+streamlit run src/ui/chat_streamlit/app.py
+```
+
+```bash
+python scripts/agent_cli.py
+```
+
+```bash
+docker compose up backend streamlit-ui web
+```
+
+> Full operational detail, including the MCP server and troubleshooting, is in
+> [docs/RUN_GUIDE.md](docs/RUN_GUIDE.md).
 
 ---
 
-## 📊 Quality & Compliance Evidence
-- **Phase 1 Quality Gate**: Passed (44/44 tests passed, full CRUD integrity).
-- **Phase 2 Quality Gate**: Passed (32/32 tests passed, RAG ChromaDB embeddings verified).
-- **Phase 3 Quality Gate**: Passed (21/21 tests passed, 91.0%+ code coverage, 0 Bugs, 0 Vulnerabilities, 0 Code Smells).
-- **Multi-Phase Verification**: 100% Passed via `python verify_all_phases.py`.
-- **SonarQube Evidence**: Verified on `http://localhost:9001/dashboard?id=POC-07-Inventory-Phase3`.
+## 🧪 Tests
 
+```bash
+python -m pytest
+```
+
+Collects all five suites from `tests/` — 232 passing, 2 skipped (the two skips are
+LangSmith checks that need a cloud API key). Scope one phase with
+`python -m pytest tests/phase3`.
+
+`--import-mode=importlib` is set in `pytest.ini` and is required: two suites
+contain a `test_coverage_boost.py`, and the default import mode aborts collection
+on the basename collision.
+
+---
+
+## 📊 Quality evidence
+
+Per-phase scores, test reports, SonarQube reports and dashboard screenshots are in
+[`submissions/`](submissions/). Coverage and JUnit XML for each phase sit alongside
+them, together with the `sonar-project.properties` used for that phase's scan.

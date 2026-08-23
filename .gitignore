@@ -56,3 +56,8 @@ Thumbs.db
 scratch/
 test_output.txt
 Login.txt
+
+# tests/phase2 deliberately points get_vectorstore() at a path that does not
+# exist to cover the missing-store branch; Chroma creates it, so every run leaves
+# this directory behind in the repository root.
+non_existent_chroma_path_xyz/
