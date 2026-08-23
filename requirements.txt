@@ -1,40 +1,93 @@
 # Unified Master Requirements for Retail Inventory Management & Procurement System
-# Core Backend & REST API (FastAPI, SQLAlchemy, Pydantic)
-fastapi>=0.111.0
-uvicorn[standard]>=0.29.0
-sqlalchemy>=2.0.30
-alembic>=1.13.1
-pydantic>=2.9.0
-pydantic-settings>=2.3.0
-python-multipart>=0.0.9
-python-jose[cryptography]>=3.3.0
-passlib[bcrypt]>=1.7.4
-structlog>=24.1.0
-requests>=2.32.3
-python-dotenv>=1.0.1
+#
+# Version policy: every entry carries a verified floor and a major-version
+# ceiling. The floors are the versions this codebase is actually tested against
+# (see the "verified with" comments), not aspirational minimums. The previous
+# revision of this file used bare `>=` floors that predated the code by whole
+# major versions -- `langchain>=0.2.0`, for instance, can never satisfy the
+# `import langchain_classic` used throughout, because that package only exists
+# in langchain 1.x. A fresh `pip install -r requirements.txt` resolving to those
+# floors produced an environment the app could not run in.
 
-# RAG, Vector Search & Embeddings (Phase 2)
-chromadb>=0.5.0
-langchain>=0.2.0
-langchain-community>=0.2.0
-langchain-google-genai>=1.0.0
-google-genai>=0.1.0
+# Core Backend & REST API (FastAPI, SQLAlchemy, Pydantic) -- Phase 1
+fastapi>=0.141.0,<1.0.0
+uvicorn[standard]>=0.52.0,<1.0.0
+starlette>=1.3.0,<2.0.0
+sqlalchemy>=2.0.51,<3.0.0
+pydantic>=2.13.0,<3.0.0
+pydantic-settings>=2.14.0,<3.0.0
+python-multipart>=0.0.32
+python-jose[cryptography]>=3.5.0,<4.0.0
+passlib[bcrypt]>=1.7.4,<2.0.0
+# bcrypt is capped below 5.0 on purpose. Under bcrypt 5.0.0 passlib 1.7.4's
+# bcrypt backend is broken outright: hashing any password, even a 7-byte one,
+# raises "ValueError: password cannot be longer than 72 bytes". With bcrypt 4.3.0
+# the same call succeeds and round-trips. Measured, both ways.
+#
+# Note this cap does NOT silence the
+#   "(trapped) error reading bcrypt version"
+# traceback on the first hash call -- that comes from passlib probing
+# `bcrypt.__about__.__version__` (passlib/handlers/bcrypt.py:620), an attribute
+# bcrypt dropped back in the 4.1 line, so it appears for any bcrypt >= 4.1 and
+# would need passlib itself to be replaced. It is cosmetic.
+#
+# Either way real password hashing is unaffected: the CryptContext in
+# src/backend/routers/auth.py lists pbkdf2_sha256 FIRST, so every password this
+# app stores uses pbkdf2_sha256 and never reaches the bcrypt backend. The cap
+# exists so the declared bcrypt scheme stays usable for verifying a pre-existing
+# bcrypt hash rather than being dead weight.
+bcrypt>=4.0.1,<5.0.0
+structlog>=24.1.0,<27.0.0
+requests>=2.32.3,<3.0.0
+python-dotenv>=1.0.1,<2.0.0
 
-# Agentic AI & Tracing (Phase 3)
-langchain-classic>=0.1.0
-langsmith>=0.1.0
-opentelemetry-api>=1.20.0
-opentelemetry-sdk>=1.20.0
+# NOTE: alembic was previously declared here but this repository contains no
+# alembic.ini, no migrations/ or alembic/ directory, and no code that imports
+# it -- schema creation is done by SQLAlchemy `Base.metadata.create_all()` in
+# src/backend/database.py. Declaring it implied a migration workflow that does
+# not exist. Re-add it together with a real migration tree if one is needed.
+# alembic>=1.13.1,<2.0.0
 
-# Model Context Protocol - MCP Server (Phase 4)
-fastmcp>=3.0.0
-mcp>=1.20.0
+# RAG, Vector Search & Embeddings -- Phase 2
+# chromadb floor is 1.0, not 0.5: `drop_collection()` in src/rag/ingest.py
+# iterates `client.list_collections()` and reads `.name` off each element. The
+# 0.6.x line briefly returned bare collection-name strings there, which makes
+# that comprehension raise AttributeError -- swallowed by the surrounding
+# except, so the collection is never dropped and each ingest run appends another
+# full copy of every chunk. Verified with chromadb 1.5.9, which returns
+# Collection objects.
+chromadb>=1.0.0,<2.0.0
+langchain>=1.3.0,<2.0.0
+langchain-core>=1.6.0,<2.0.0
+langchain-community>=0.4.0,<1.0.0
+langchain-text-splitters>=1.1.0,<2.0.0
+langchain-google-genai>=4.3.0,<5.0.0
+google-genai>=2.19.0,<3.0.0
 
-# User Interfaces (Phase 1 React & Phase 2 Streamlit)
-streamlit>=1.35.0
+# Agentic AI & Tracing -- Phase 3
+# langchain-classic holds the pieces that moved out of langchain core in 1.x:
+# RetrievalQA, load_summarize_chain, initialize_agent, create_react_agent.
+langchain-classic>=1.0.0,<2.0.0
+langsmith>=0.11.0,<1.0.0
+opentelemetry-api>=1.44.0,<2.0.0
+opentelemetry-sdk>=1.44.0,<2.0.0
+
+# Model Context Protocol - MCP Server -- Phase 4
+fastmcp>=3.4.0,<4.0.0
+mcp>=1.29.0,<2.0.0
+
+# Multi-Agent Orchestration -- Phase 5
+# Previously ABSENT from this file entirely, which meant Phase 5 could not be
+# installed from a clean clone at all: src/agents/multi_agent/graph.py imports
+# langgraph.graph.StateGraph at module scope, so every Phase 5 import and all 33
+# of its tests failed with ModuleNotFoundError on a fresh environment.
+langgraph>=1.2.0,<2.0.0
+
+# User Interfaces (Phase 1 React is built with npm; this is the Streamlit chat UI)
+streamlit>=1.62.0,<2.0.0
 
 # Testing & Code Quality
-pytest>=8.2.2
-pytest-asyncio>=0.23.7
-pytest-cov>=5.0.0
-httpx>=0.27.0
+pytest>=9.0.0,<10.0.0
+pytest-asyncio>=1.4.0,<2.0.0
+pytest-cov>=7.0.0,<8.0.0
+httpx>=0.28.0,<1.0.0

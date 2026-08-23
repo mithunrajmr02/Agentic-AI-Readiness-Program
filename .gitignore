@@ -2,6 +2,10 @@
 .env
 .env.*
 **/.env
+# ...but the committed template MUST be tracked -- it is the only in-repo record
+# of which variables the code actually reads. `.env.*` above would otherwise
+# swallow it, which is how this repo ended up with no example file at all.
+!.env.example
 
 # Python Bytecode & Caches
 __pycache__/
@@ -12,6 +16,11 @@ __pycache__/
 **/.pytest_cache/
 .coverage
 htmlcov/
+
+# Agent tooling: launch.json describes how to start this project's dev servers
+# and is worth sharing; settings.local.json is a per-machine permission cache
+# full of absolute paths from one developer's box and must not be.
+.claude/settings.local.json
 
 # Vector Stores & Databases
 chroma_db/
