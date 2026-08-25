@@ -10,6 +10,7 @@ import structlog
 from src.backend.database import engine, Base, SessionLocal
 from src.backend.logging_config import configure_logging
 from src.backend.routers import auth, inventory
+from src.backend import models_registry  # noqa: F401
 
 configure_logging()
 logger = structlog.get_logger()
