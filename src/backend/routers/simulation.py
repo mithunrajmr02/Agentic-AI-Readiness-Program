@@ -22,11 +22,12 @@ who is asking.
 
 Integration status
 ------------------
-This module publishes a module-level ``router`` and stops. It is deliberately not
-wired into ``src/backend/main.py``; that is an integration step and ``main.py``
-belongs to another stream. The requests needed to complete the wiring — including a
-``StewardError`` exception handler so error bodies keep the frozen ``{"error":
-{...}}`` shape — are filed in ``docs/implementation/integration-requests/WS-2.md``.
+Wired into ``src/backend/main.py`` by the Wave-1 integration commit; the router is
+registered and all five operations are reachable. The remaining request filed in
+``docs/implementation/integration-requests/WS-2.md`` -- an app-level
+``StewardError`` handler so error bodies keep the frozen ``{"error": {...}}``
+shape -- is still open, which is why the guards below still hand-build their
+responses.
 
 Why the error bodies are hand-built
 -----------------------------------
