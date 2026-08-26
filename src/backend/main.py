@@ -9,8 +9,18 @@ import structlog
 
 from src.backend.database import engine, Base, SessionLocal
 from src.backend.logging_config import configure_logging
-from src.backend.routers import auth, inventory
+from src.backend.routers import (
+    approvals,
+    auth,
+    decisions,
+    inventory,
+    policies,
+    signals,
+    simulation,
+    suppliers,
+)
 from src.backend import models_registry  # noqa: F401
+from src.signals import setup_event_handlers
 
 configure_logging()
 logger = structlog.get_logger()
@@ -82,7 +92,11 @@ def seed_default_admin():
 
 @asynccontextmanager
 async def lifespan(app_instance: FastAPI):
+    # `create_all` first: the signal engine's subscribers open their own sessions
+    # and read the Wave-1 tables, so those tables must exist before anything can
+    # be dispatched to them.
     Base.metadata.create_all(bind=engine)
+    setup_event_handlers()
     seed_default_admin()
     seed_default_suppliers()
     yield
@@ -177,6 +191,17 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 
 app.include_router(auth.router)
 app.include_router(inventory.router)
+
+# Wave-1 routers. Until this point the Wave-1 packages were importable but
+# unreachable over HTTP -- every stream shipped its router without registering
+# it, so the API surface still ended at auth + inventory and no test that went
+# through the app could see any of them.
+app.include_router(signals.router)
+app.include_router(decisions.router)
+app.include_router(approvals.router)
+app.include_router(policies.router)
+app.include_router(suppliers.router)
+app.include_router(simulation.router)
 
 
 @app.get("/health")
