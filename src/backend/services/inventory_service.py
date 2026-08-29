@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import datetime
 from typing import Dict, Any, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -7,9 +7,19 @@ from src.backend.models import (
     Product, StockLevel, StockMovement, PurchaseOrder, POItem,
     StockAlert, MovementType, POStatus, CATEGORY_PREFIXES
 )
+from src.execution import clock
 import structlog
 
 logger = structlog.get_logger()
+
+# WS-9 defect fix (:133): a PO is receivable only from these statuses. Was a
+# blacklist that only excluded `cancelled` (any other unexpected status, plus
+# `draft`, passed through silently); this is now an explicit whitelist so an
+# unrecognised status fails safe. `draft` stays receivable -- the only
+# existing PO-creation path (`POST /api/v1/orders`) hard-codes `draft` and the
+# graded API suite (`test_receive_po_updates_stock`) receives directly from
+# it, so narrowing this further would be a regression, not a fix.
+RECEIVABLE_PO_STATUSES = (POStatus.draft, POStatus.submitted, POStatus.acknowledged)
 
 
 def _next_sequence(db: Session, column, prefix: str) -> int:
@@ -57,7 +67,7 @@ def generate_sku(category: str, db: Session) -> str:
 
 
 def generate_po_number(db: Session) -> str:
-    year = date.today().year
+    year = clock.today().year
     return f"PO-{year}-{_next_sequence(db, PurchaseOrder.po_number, f'PO-{year}-'):04d}"
 
 
@@ -122,7 +132,40 @@ def check_stock_alerts(product: Product, stock: StockLevel, db: Session) -> None
         )
 
 
-def receive_purchase_order(po_id: int, db: Session) -> PurchaseOrder:
+def is_partially_received(po: PurchaseOrder) -> bool:
+    """Derived predicate, not a status (file 09 §7.3) -- `POStatus` renders as
+    VARCHAR + CHECK on SQLite and cannot gain a sixth `partially_received`
+    member. Carries the quantities rather than a label.
+    """
+    return po.status in (POStatus.submitted, POStatus.acknowledged) and any(
+        0 < (item.quantity_received or 0) < item.quantity_ordered for item in po.items
+    )
+
+
+def receive_purchase_order(
+    po_id: int,
+    db: Session,
+    *,
+    item_receipts: Optional[Dict[int, int]] = None,
+    received_at: Optional[datetime] = None,
+) -> PurchaseOrder:
+    """Record a receipt against a PO. Supports partial and full receipt.
+
+    `item_receipts` maps `po_item.id` -> quantity received in THIS event (not
+    cumulative). Omitting an item, or the whole mapping, receives that item's
+    full outstanding quantity -- the pre-existing full-receipt behaviour every
+    current caller relies on.
+
+    WS-9 defect fixes:
+    - `:133` guard is now the `RECEIVABLE_PO_STATUSES` whitelist above.
+    - `:137` used `date.today()`, bypassing the clock; now `clock.now()`
+      (or an explicit `received_at`, e.g. a seeder backdating history).
+    - `:140-141` `quantity_received or quantity_ordered` silently booked any
+      partial receipt as complete. Each item's outstanding quantity is now
+      tracked individually and the PO only advances to `received` once every
+      item is fully received; a genuine partial receipt leaves the PO's
+      status untouched (`is_partially_received` becomes true).
+    """
     po = db.query(PurchaseOrder).filter(PurchaseOrder.id == po_id).first()
     if not po:
         raise ValueError(f"Purchase order {po_id} not found")
@@ -130,15 +173,32 @@ def receive_purchase_order(po_id: int, db: Session) -> PurchaseOrder:
     if po.status == POStatus.received:
         raise ValueError(f"Purchase order {po.po_number} has already been received")
 
-    if po.status == POStatus.cancelled:
-        raise ValueError(f"Cannot receive cancelled purchase order {po.po_number}")
+    if po.status not in RECEIVABLE_PO_STATUSES:
+        raise ValueError(
+            f"Cannot receive cancelled purchase order {po.po_number}"
+            if po.status == POStatus.cancelled
+            else f"Purchase order {po.po_number} cannot be received while in status '{po.status.value}'"
+        )
 
-    po.status = POStatus.received
-    po.received_date = date.today()
+    receipt_time = received_at or clock.now()
 
     for item in po.items:
-        qty = item.quantity_received or item.quantity_ordered
-        item.quantity_received = qty
+        already_received = item.quantity_received or 0
+        outstanding = item.quantity_ordered - already_received
+
+        if item_receipts is not None and item.id in item_receipts:
+            qty = item_receipts[item.id]
+        else:
+            qty = outstanding
+
+        if qty < 0 or qty > outstanding:
+            raise ValueError(
+                f"Cannot receive {qty} units of item {item.id}: only {outstanding} outstanding"
+            )
+        if qty == 0:
+            continue
+
+        item.quantity_received = already_received + qty
 
         stock = db.query(StockLevel).filter(StockLevel.product_id == item.product_id).first()
         if not stock:
@@ -153,7 +213,8 @@ def receive_purchase_order(po_id: int, db: Session) -> PurchaseOrder:
             movement_type=MovementType.receipt,
             quantity=qty,
             reference_number=po.po_number,
-            notes=f"Received from PO {po.po_number}"
+            notes=f"Received from PO {po.po_number}",
+            recorded_at=receipt_time,
         )
         db.add(movement)
 
@@ -161,10 +222,17 @@ def receive_purchase_order(po_id: int, db: Session) -> PurchaseOrder:
         if product:
             check_stock_alerts(product, stock, db)
 
+    if all((item.quantity_received or 0) >= item.quantity_ordered for item in po.items):
+        po.status = POStatus.received
+        po.received_date = receipt_time.date()
+
     db.commit()
     db.refresh(po)
 
-    logger.info("po_received", poc_id="POC-07", phase="P1", po_number=po.po_number)
+    logger.info(
+        "po_received", poc_id="POC-07", phase="P1", po_number=po.po_number,
+        partial=is_partially_received(po),
+    )
     return po
 
 
