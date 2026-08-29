@@ -29,11 +29,8 @@ chroma_db/
 *.sqlite
 *.sqlite3
 
-# WS-8 local runtime artifacts (checkpoint.py / ledger.py) -- stand-ins for
-# tables/services this stream does not own; see
-# docs/implementation/integration-requests/WS-8.md
-data/graph_checkpoints.pkl*
-data/agent_ledger.jsonl
+# Local runtime data artifacts
+data/
 
 # Virtual Environments
 venv/
