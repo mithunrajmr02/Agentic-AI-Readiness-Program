@@ -15,11 +15,13 @@ from src.backend.routers import (
     decisions,
     inventory,
     policies,
+    receiving,
     signals,
     simulation,
     suppliers,
 )
 from src.backend import models_registry  # noqa: F401
+from src.runtime.registry import register_runtime
 from src.signals import setup_event_handlers
 
 configure_logging()
@@ -97,6 +99,7 @@ async def lifespan(app_instance: FastAPI):
     # be dispatched to them.
     Base.metadata.create_all(bind=engine)
     setup_event_handlers()
+    register_runtime(app_instance)
     seed_default_admin()
     seed_default_suppliers()
     yield
@@ -192,16 +195,14 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 app.include_router(auth.router)
 app.include_router(inventory.router)
 
-# Wave-1 routers. Until this point the Wave-1 packages were importable but
-# unreachable over HTTP -- every stream shipped its router without registering
-# it, so the API surface still ended at auth + inventory and no test that went
-# through the app could see any of them.
+# Wave-1 and Wave-2 routers.
 app.include_router(signals.router)
 app.include_router(decisions.router)
 app.include_router(approvals.router)
 app.include_router(policies.router)
 app.include_router(suppliers.router)
 app.include_router(simulation.router)
+app.include_router(receiving.router)
 
 
 @app.get("/health")

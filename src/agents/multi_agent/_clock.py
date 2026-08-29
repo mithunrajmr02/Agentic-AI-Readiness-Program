@@ -1,24 +1,31 @@
-"""Local clock shim -- WS-8 does not own and cannot create `src/core/clock.py`
-(15-SHARED-CONTRACTS.md §2.1, owned by WS-0; not present in this worktree).
+"""Re-export and wrap the system clock for multi_agent package.
 
-This module exists solely so this stream is not scattering bare
-`datetime.now()` calls across `nodes/` and `ledger.py`. It mirrors the real
-contract's two functions exactly, so every call site becomes a one-line
-import swap the moment `src/core/clock.py` lands -- see
-docs/implementation/integration-requests/WS-8.md, which asks for it.
-
-Every other module in this package that needs "now" imports from here, not
-from `datetime` directly, so this file is the only place in this stream's
-code the grep-enforced ban on `datetime.now()` is technically touched, and it
-is touched in exactly one place, for a documented reason, pending the real
-clock.
+Delegates directly to the unified frozen clock in src/core/clock.py, while
+allowing test monkeypatching of clock.now() / clock.today().
 """
-from datetime import datetime, date
+from datetime import date, datetime
+from src.core import clock as _core_clock
 
 
 def now() -> datetime:
-    return datetime.now()
+    return _core_clock.now()
 
 
 def today() -> date:
-    return date.today()
+    return now().date()
+
+
+def offset_days() -> int:
+    return _core_clock.offset_days()
+
+
+def set_offset(days: int) -> None:
+    _core_clock.set_offset(days)
+
+
+def reset() -> None:
+    _core_clock.reset()
+
+
+__all__ = ["now", "today", "offset_days", "set_offset", "reset"]
+
