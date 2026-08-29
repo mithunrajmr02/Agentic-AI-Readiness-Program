@@ -101,25 +101,36 @@ export default function SignalsScreen() {
           </p>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button className="btn btn-outline" style={{ fontSize: 'var(--t-meta-size)' }}>
+            Scan Telemetry Now
+          </button>
           <select
             className="form-control"
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
             style={{ width: '140px' }}
           >
-            <option value="all">All Status</option>
+            <option value="all">All Signals</option>
             <option value="open">Open Only</option>
-            <option value="resolved">Resolved</option>
+            <option value="critical">Critical</option>
+            <option value="config_drift">Config Drift</option>
+            <option value="projected_breach">Projected Breach</option>
+            <option value="po_overdue">PO Overdue</option>
+            <option value="data_insufficient">Data Insufficient</option>
           </select>
         </div>
       </div>
 
       <Card>
-        <Table
-          columns={columns}
-          rows={filtered}
-          onRowClick={(row) => navigate(`/signals/${row.signal_id}`)}
-        />
+        {filtered.length > 0 ? (
+          <Table
+            columns={columns}
+            rows={filtered}
+            onRowClick={(row) => navigate(`/signals/${row.signal_id}`)}
+          />
+        ) : (
+          <div className="EmptyState">No signals found matching current filter.</div>
+        )}
       </Card>
     </div>
   );

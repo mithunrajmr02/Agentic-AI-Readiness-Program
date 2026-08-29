@@ -10,6 +10,9 @@ logger = structlog.get_logger()
 
 
 def _handle_signal_raised(payload: dict[str, Any]) -> None:
+    from src.runtime.scheduler import scheduler_enabled
+    if not scheduler_enabled():
+        return
     try:
         on_event_trigger(payload)
     except Exception as exc:
@@ -17,6 +20,9 @@ def _handle_signal_raised(payload: dict[str, Any]) -> None:
 
 
 def _handle_clock_advanced(payload: dict[str, Any]) -> None:
+    from src.runtime.scheduler import scheduler_enabled
+    if not scheduler_enabled():
+        return
     try:
         on_scheduled_tick()
     except Exception as exc:

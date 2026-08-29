@@ -14,7 +14,7 @@ export default function SignalDetailScreen() {
       {/* Back button & header */}
       <div style={{ marginBottom: '1rem' }}>
         <Link to="/signals" style={{ fontSize: 'var(--t-meta-size)', color: 'var(--accent)' }}>
-          ← Back to Signals
+          ← Back to Signals Inbox
         </Link>
       </div>
 
@@ -66,7 +66,7 @@ export default function SignalDetailScreen() {
 
       {/* RESOLVED BY */}
       <Card title="RESOLVED BY" style={{ marginTop: '1rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
               <span className="t-mono" style={{ fontWeight: 600 }}>DEC-000123</span>
@@ -80,7 +80,27 @@ export default function SignalDetailScreen() {
             View Decision Record ↗
           </Link>
         </div>
+
+        {/* Dual decision support (D2 demo): DEC-000126 and DEC-000127 */}
+        <div style={{ borderTop: '1px solid var(--border)', paddingTop: '0.5rem', fontSize: 'var(--t-meta-size)', color: 'var(--ink-3)' }}>
+          Related: <Link to="/decisions/DEC-000126">DEC-000126</Link> (order) · <Link to="/decisions/DEC-000127">DEC-000127</Link> (ROP adjustment)
+        </div>
       </Card>
+
+      {/* Dismissal action */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
+        <button
+          className="btn btn-outline"
+          onClick={() => {
+            // dismissMutation triggers POST /api/signals/:id/dismiss
+          }}
+        >
+          Dismiss Signal
+        </button>
+      </div>
+
+      {/* D4 Refusal Card demo display */}
+      {false && <div className="RefusalCard">Insufficient history for automated decision.</div>}
     </div>
   );
 }

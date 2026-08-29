@@ -378,7 +378,7 @@ def _signal_identity(db, signal: Signal) -> tuple[str, str | None, str | None, s
         product = db.query(Product).filter(Product.id == signal.product_id).first()
         product_sku = product.sku if product else None
     supplier_code = None
-    if signal.supplier_id:
+    if signal.supplier_id and (signal.signal_type == "supplier_drift" or signal.product_id is None):
         supplier = db.query(Supplier).filter(Supplier.id == signal.supplier_id).first()
         supplier_code = supplier.supplier_code if supplier else None
     return (signal.signal_type, product_sku, supplier_code, signal.severity)

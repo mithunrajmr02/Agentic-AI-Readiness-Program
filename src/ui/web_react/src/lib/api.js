@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-export const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8010/api/v1';
+export const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 export const TOKEN_STORAGE_KEY = 'poc07.access_token';
 
 // Create configured axios instance

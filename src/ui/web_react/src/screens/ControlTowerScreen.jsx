@@ -62,6 +62,32 @@ export default function ControlTowerScreen() {
             </Link>
           </div>
 
+          {/* Overdue PO Item */}
+          <div style={{
+            background: 'var(--surface-0)',
+            border: '1px solid var(--border)',
+            borderLeft: '4px solid var(--warn)',
+            borderRadius: 'var(--radius-md)',
+            padding: '1rem 1.25rem',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.35rem' }}>
+                <SeverityDot severity="warn" label="PO Overdue" />
+                <span className="t-mono" style={{ fontWeight: 700 }}>SIG-000046</span>
+                <span style={{ color: 'var(--ink-2)' }}>po_overdue · Sharma Electronics</span>
+              </div>
+              <div style={{ fontSize: 'var(--t-body-size)', color: 'var(--ink-2)' }}>
+                PO-2026-0038 expected 23 Aug; 2 days overdue
+              </div>
+            </div>
+            <Link to="/signals/SIG-000046" className="btn btn-outline" style={{ padding: '0.45rem 1rem' }}>
+              Review →
+            </Link>
+          </div>
+
           {/* Config Drift Item */}
           <div style={{
             background: 'var(--surface-0)',
@@ -80,7 +106,7 @@ export default function ControlTowerScreen() {
                 <span style={{ color: 'var(--ink-2)' }}>config_drift · USB-C Cable</span>
               </div>
               <div style={{ fontSize: 'var(--t-body-size)', color: 'var(--ink-2)' }}>
-                Stored reorder point 20; measured velocity implies 47
+                Stored reorder point 20; measured velocity implies 47 (threshold_breach and config_drift)
               </div>
               <div style={{ fontSize: 'var(--t-meta-size)', color: 'var(--ink-3)', marginTop: '0.25rem' }}>
                 detected at 08:00 tick
@@ -90,6 +116,9 @@ export default function ControlTowerScreen() {
               Review →
             </Link>
           </div>
+
+          {/* Empty State message when nothing needs attention */}
+          {false && <div>Nothing Needs You. 4 decisions handled autonomously since 08:00.</div>}
         </div>
       </div>
 
@@ -225,10 +254,16 @@ export default function ControlTowerScreen() {
         color: 'var(--ink-3)',
         display: 'flex',
         alignItems: 'center',
+        justifyContent: 'space-between',
         gap: '0.5rem',
       }}>
-        <span>ⓘ</span>
-        <span>Demonstration data — 90-day history is simulated. Deterministic arithmetic and governance mechanism are real.</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <span>ⓘ</span>
+          <span>Demonstration Data Disclosure — 90-day history is simulated. Deterministic arithmetic and governance mechanism are real.</span>
+        </div>
+        <button className="btn btn-outline" style={{ padding: '0.35rem 0.75rem', fontSize: 'var(--t-meta-size)' }}>
+          Scan Telemetry Now
+        </button>
       </div>
     </div>
   );

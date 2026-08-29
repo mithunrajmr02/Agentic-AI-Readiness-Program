@@ -12,6 +12,11 @@ def scheduler_enabled() -> bool:
         "true",
         "yes",
         "on",
+    } or os.getenv("RUNTIME_ENABLED", "false").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
     }
 
 
