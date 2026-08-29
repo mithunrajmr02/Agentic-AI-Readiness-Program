@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 
 from src.backend.services.po_service import DuplicateOpenPurchaseOrder, create_purchase_order
 from src.execution.preconditions import check_preconditions
+from src.core import events
 
 
 @dataclass(frozen=True)
@@ -61,5 +62,13 @@ def execute_decision(db: Session, decision: Any) -> ExecutionResult:
             failed_precondition="duplicate_open_po",
             detail=str(exc),
         )
+
+    # Emit decision.executed event
+    events.emit("decision.executed", {
+        "decision_id": getattr(decision, "decision_id", None),
+        "execution_ref": po.po_number,
+        "product_id": product_id,
+        "quantity": quantity,
+    })
 
     return ExecutionResult(ok=True, execution_ref=po.po_number, failed_precondition=None, detail="Purchase order created")

@@ -8,6 +8,7 @@ from src.backend.models import (
     StockAlert, MovementType, POStatus, CATEGORY_PREFIXES
 )
 from src.execution import clock
+from src.core import events
 import structlog
 
 logger = structlog.get_logger()
@@ -217,6 +218,8 @@ def receive_purchase_order(
             recorded_at=receipt_time,
         )
         db.add(movement)
+        events.emit("stock.movement_recorded", {"product_id": item.product_id, "quantity": qty, "movement_type": "receipt"})
+        events.emit("stock.level_changed", {"product_id": item.product_id, "quantity_on_hand": stock.quantity_on_hand})
 
         product = db.query(Product).filter(Product.id == item.product_id).first()
         if product:
@@ -228,6 +231,10 @@ def receive_purchase_order(
 
     db.commit()
     db.refresh(po)
+
+    # Emit po.received event with days_late calculation
+    days_late = (receipt_time.date() - po.expected_delivery).days if po.expected_delivery else 0
+    events.emit("po.received", {"po_number": po.po_number, "days_late": max(0, days_late)})
 
     logger.info(
         "po_received", poc_id="POC-07", phase="P1", po_number=po.po_number,

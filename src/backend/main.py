@@ -13,6 +13,7 @@ from src.backend.routers import (
     approvals,
     auth,
     decisions,
+    impact,
     inventory,
     policies,
     receiving,
@@ -203,6 +204,7 @@ app.include_router(policies.router)
 app.include_router(suppliers.router)
 app.include_router(simulation.router)
 app.include_router(receiving.router)
+app.include_router(impact.router)
 
 
 @app.get("/health")
