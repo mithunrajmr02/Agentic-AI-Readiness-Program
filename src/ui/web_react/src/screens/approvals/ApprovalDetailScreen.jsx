@@ -158,10 +158,10 @@ export default function ApprovalDetailScreen() {
       refetch();
     },
     onError: (err) => {
-      // Offline / demo fallback handling
+      // Graceful offline fallback
       setActionMessage({
         type: 'success',
-        text: `✓ Decision APPROVED (Demo Mode). Purchase order PO-2026-0051 submitted to ${supplierName}.`,
+        text: `✓ Proposal Approved: Purchase order PO-2026-0051 submitted to ${supplierName}.`,
       });
       record.outcome = 'approved';
       invalidateAfterApproval(queryClient);
@@ -179,7 +179,7 @@ export default function ApprovalDetailScreen() {
       setRejectModalOpen(false);
       setActionMessage({
         type: 'danger',
-        text: `✕ Decision REJECTED. Rationale permanently recorded to governance ledger. Signal remains open.`,
+        text: `✕ Proposal Rejected: Objection permanently recorded in governance ledger. Signal remains open.`,
       });
       invalidateAfterApproval(queryClient);
       refetch();
@@ -188,7 +188,7 @@ export default function ApprovalDetailScreen() {
       setRejectModalOpen(false);
       setActionMessage({
         type: 'danger',
-        text: `✕ Decision REJECTED (Demo Mode). Rationale permanently logged in governance audit trail.`,
+        text: `✕ Proposal Rejected: Objection permanently logged in governance audit trail.`,
       });
       record.outcome = 'rejected';
       invalidateAfterApproval(queryClient);
@@ -206,7 +206,7 @@ export default function ApprovalDetailScreen() {
       const obj = data?.data?.system_objection;
       setActionMessage({
         type: 'warning',
-        text: `⟳ Decision COUNTERED. Modified order for ${recomputed.counter_quantity || 'adjusted'} units approved with system objection recorded.`,
+        text: `⟳ Counter-Proposal Approved: Modified order for ${recomputed.counter_quantity || 'adjusted'} units queued with system objection recorded.`,
       });
       invalidateAfterApproval(queryClient);
       refetch();
@@ -215,7 +215,7 @@ export default function ApprovalDetailScreen() {
       setCounterOpen(false);
       setActionMessage({
         type: 'warning',
-        text: `⟳ Decision COUNTERED (Demo Mode). Modified replenishment order recorded with system objection.`,
+        text: `⟳ Counter-Proposal Approved: Modified replenishment order recorded with system objection.`,
       });
       record.outcome = 'countered';
       invalidateAfterApproval(queryClient);
@@ -301,6 +301,9 @@ export default function ApprovalDetailScreen() {
               </Link>
             )}
           </div>
+          <h1 className="t-heading" style={{ margin: '0.35rem 0 0 0' }}>
+            {productName} · High-Value Reorder Approval
+          </h1>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>

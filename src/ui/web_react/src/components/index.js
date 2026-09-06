@@ -8,3 +8,9 @@ export { default as EmptyState } from './EmptyState';
 export { default as AuthorityBadge } from './AuthorityBadge';
 export { default as ThreeDoorPanel } from './ThreeDoorPanel';
 export { default as MetricTile } from './MetricTile';
+
+// Spatial layout primitives
+export { default as HorizonFlow } from './HorizonFlow';
+export { default as RailwayTrack } from './RailwayTrack';
+export { default as ZenOrb } from './ZenOrb';
+export { default as SideDockWorkspace } from './SideDockWorkspace';

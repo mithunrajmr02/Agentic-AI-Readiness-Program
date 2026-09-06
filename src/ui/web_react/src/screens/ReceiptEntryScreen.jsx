@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
+import { ArrowLeft, Inbox, CheckCircle2, AlertTriangle, Calendar } from 'lucide-react';
 import { API_BASE, describeApiError } from '../lib/api';
 import { Card, SeverityDot } from '../components';
 
 /**
- * 07-UX-ARCHITECTURE.md §5.8 Goods Receipt Entry (/receiving/:poNumber)
- * Supports partial quantity receipt and explicit backdating.
+ * Goods Receipt & Dock Entry Screen (/receiving/:poNumber)
+ * Supports partial quantity intake and true physical dock arrival backdating.
  */
 export default function ReceiptEntryScreen() {
   const { poNumber } = useParams();
@@ -19,7 +20,7 @@ export default function ReceiptEntryScreen() {
     const fetchPO = async () => {
       try {
         const res = await axios.get(`${API_BASE}/orders`);
-        const found = res.data.find(o => o.po_number === poNumber || String(o.id) === poNumber);
+        const found = res.data?.find((o) => o.po_number === poNumber || String(o.id) === poNumber);
         if (found) {
           setPo(found);
           const firstItem = found.items?.[0];
@@ -38,49 +39,67 @@ export default function ReceiptEntryScreen() {
   };
 
   return (
-    <div className="receipt-entry-screen">
-      <div style={{ marginBottom: '1rem' }}>
-        <Link to="/receiving" style={{ fontSize: 'var(--t-meta-size)', color: 'var(--accent)' }}>
-          ← Back to Receiving
+    <div className="receipt-entry-screen" style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      {/* Header */}
+      <div>
+        <Link to="/receiving" className="btn btn-outline btn-sm" style={{ display: 'inline-flex', gap: '0.4rem', marginBottom: '1rem' }}>
+          <ArrowLeft size={14} /> Back to Receiving
         </Link>
-      </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <span className="t-mono" style={{ fontSize: '1.25rem', fontWeight: 700 }}>
-              {poNumber || 'PO-2026-0038'}
-            </span>
-            <SeverityDot severity="warn" label="2 days overdue" />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.35rem' }}>
+              <span className="t-mono" style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--ink-1)' }}>
+                {poNumber || 'PO-2026-0038'}
+              </span>
+              <SeverityDot severity="warn" label="2 Days Overdue Dock Arrival" />
+            </div>
+            <h1 className="t-heading" style={{ margin: 0 }}>
+              Record Physical Goods Receipt
+            </h1>
+            <p className="t-meta" style={{ marginTop: '0.35rem' }}>
+              Vendor: Sharma Electronics · Promised Arrival: 23 Aug 2026
+            </p>
           </div>
-          <h1 className="t-display" style={{ margin: '0.25rem 0' }}>Record Goods Receipt</h1>
-          <p className="t-meta">
-            Sharma Electronics · Expected 23 Aug 2026
-          </p>
         </div>
       </div>
 
       {submitted ? (
-        <div style={{
-          padding: '1.25rem',
-          background: 'rgba(5, 96, 58, 0.1)',
-          color: 'var(--good)',
-          border: '1px solid rgba(5, 96, 58, 0.3)',
-          borderRadius: 'var(--radius-md)',
-          fontWeight: 600,
-        }}>
-          ✓ Receipt of {receivedQty} units on {receivedDate} recorded successfully. Stock movements and supplier reliability updated.
+        <div
+          style={{
+            padding: '1.5rem',
+            background: 'var(--good-light)',
+            color: 'var(--good)',
+            border: '1px solid var(--good-border)',
+            borderRadius: 'var(--radius-md)',
+            boxShadow: 'var(--shadow-card)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+            <CheckCircle2 size={20} color="var(--good)" />
+            <h3 style={{ margin: 0, fontWeight: 700 }}>Goods Receipt Recorded Successfully</h3>
+          </div>
+          <p style={{ fontSize: 'var(--t-body-size)', color: 'var(--ink-2)', lineHeight: 1.5, margin: 0 }}>
+            Receipt of <strong>{receivedQty} units</strong> on <strong>{receivedDate}</strong> recorded to stock ledger. Measured supplier lead-time drift and product stock cover updated.
+          </p>
+          <div style={{ marginTop: '1rem' }}>
+            <Link to="/receiving" className="btn btn-outline btn-sm">
+              Return to Receiving Queue
+            </Link>
+          </div>
         </div>
       ) : (
-        <Card style={{ maxWidth: '600px' }}>
+        <Card title="Dock Verification & Physical Count">
           <form onSubmit={handleSubmit}>
-            <div style={{ marginBottom: '1.25rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
-              <div style={{ fontSize: 'var(--t-body-size)', fontWeight: 600 }}>Bluetooth Speaker</div>
-              <div style={{ fontSize: 'var(--t-meta-size)', color: 'var(--ink-3)' }}>Ordered: 240 units @ ₹285.00</div>
+            <div style={{ background: 'var(--surface-1)', padding: '1rem 1.25rem', borderRadius: 'var(--radius-sm)', marginBottom: '1.25rem' }}>
+              <div style={{ fontWeight: 700, color: 'var(--ink-1)', fontSize: 'var(--t-body-size)' }}>Bluetooth Speaker (SKU-ELC-0001)</div>
+              <div className="t-mono" style={{ fontSize: '11px', color: 'var(--ink-3)', marginTop: '0.2rem' }}>
+                Purchase Order: 240 units @ ₹285.00 · Total ₹68,400.00
+              </div>
             </div>
 
             <div className="form-group">
-              <label>Actual Quantity Received</label>
+              <label className="form-label">Physical Quantity Received</label>
               <input
                 type="number"
                 value={receivedQty}
@@ -88,13 +107,13 @@ export default function ReceiptEntryScreen() {
                 className="form-control"
                 required
               />
-              <span style={{ fontSize: 'var(--t-meta-size)', color: 'var(--ink-3)' }}>
-                Partial receipt: PO remains open for any remaining units.
+              <span style={{ fontSize: '11px', color: 'var(--ink-3)', marginTop: '0.35rem', display: 'block' }}>
+                Partial receipts leave remaining units open on this PO number without duplicate generation.
               </span>
             </div>
 
             <div className="form-group">
-              <label>Received On (Actual Arrival Date)</label>
+              <label className="form-label">Actual Dock Arrival Date</label>
               <input
                 type="date"
                 value={receivedDate}
@@ -102,14 +121,18 @@ export default function ReceiptEntryScreen() {
                 className="form-control"
                 required
               />
-              <span style={{ fontSize: 'var(--t-meta-size)', color: 'var(--ink-3)' }}>
-                Allows backdating to reflect true physical dock delivery date for supplier reliability scoring.
+              <span style={{ fontSize: '11px', color: 'var(--ink-3)', marginTop: '0.35rem', display: 'block' }}>
+                Supports retroactive dock logging to guarantee accurate supplier lead-time scoring.
               </span>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
-              <Link to="/receiving" className="btn btn-outline">Cancel</Link>
-              <button type="submit" className="btn btn-success">Record Receipt</button>
+              <Link to="/receiving" className="btn btn-outline">
+                Cancel
+              </Link>
+              <button type="submit" className="btn btn-primary">
+                Commit Goods Receipt
+              </button>
             </div>
           </form>
         </Card>

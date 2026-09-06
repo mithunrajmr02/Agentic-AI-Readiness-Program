@@ -1,34 +1,67 @@
-/* 07-UX-ARCHITECTURE.md & 15-SHARED-CONTRACTS.md §13 Design System Tokens */
+/* STEWARD Canonical Design System Tokens */
 :root {
-  /* Surface palette */
-  --surface-0: #FFFFFF;   /* page */
-  --surface-1: #F7F8FA;   /* panels, table headers */
-  --surface-2: #EDEFF3;   /* hover, selected */
-  --border: #DFE3E8;
+  /* Surface palette - Clean, layered, ambient hierarchy */
+  --surface-0: #FFFFFF;         /* Base canvas / card surface */
+  --surface-1: #F8FAFC;         /* Layered sections, table headers, soft panels */
+  --surface-2: #F1F5F9;         /* Interactive elements, hover states, badges */
+  --surface-3: #E2E8F0;         /* Card borders, hairline dividers */
+  --surface-hover: #EDF2F7;     /* Hover background */
+  --surface-active: #E2E8F0;    /* Active/selected state */
+  --border: #E2E8F0;            /* Default crisp hairline border */
+  --border-focus: #3B82F6;      /* Keyboard focus border */
 
-  /* Ink palette */
-  --ink-1: #14181F;       /* primary text */
-  --ink-2: #556070;       /* secondary */
-  --ink-3: #8792A2;       /* tertiary, labels */
+  /* Ink palette - Crisp contrast and readable hierarchy */
+  --ink-1: #0F172A;             /* Primary headings and bold numerals */
+  --ink-2: #334155;             /* Secondary body text, descriptions */
+  --ink-3: #64748B;             /* Metadata, subtitles, column headers */
+  --ink-4: #94A3B8;             /* Disabled text, tertiary captions */
 
-  /* Semantic palette */
-  --accent: #1A56DB;      /* interactive, links, primary buttons */
-  --critical: #C4262E;    /* out-of-stock, overdue, failed */
-  --warn: #B54708;        /* threshold breach, pending, expiring */
-  --good: #05603A;        /* executed, on-time, sufficient */
-  --agent: #5B21B6;       /* agent-authored content ONLY */
+  /* Semantic State Palette */
+  --accent: #2563EB;            /* Interactive primary triggers, key links */
+  --accent-hover: #1D4ED8;
+  --accent-light: #EFF6FF;      /* Accent tint / highlight background */
+  --accent-border: #BFDBFE;
 
-  /* Type scale */
+  --critical: #DC2626;          /* Stockout, SLA breach, critical exceptions */
+  --critical-hover: #B91C1C;
+  --critical-light: #FEF2F2;
+  --critical-border: #FECACA;
+
+  --warn: #D97706;              /* Approvals pending, overdue POs, threshold drift */
+  --warn-hover: #B45309;
+  --warn-light: #FFFBEB;
+  --warn-border: #FDE68A;
+
+  --good: #059669;              /* Executed decisions, healthy stock, on-time delivery */
+  --good-hover: #047857;
+  --good-light: #ECFDF5;
+  --good-border: #A7F3D0;
+
+  /* Dedicated Agent Provenance Hue (Never used for general UI decorations) */
+  --agent: #7C3AED;             /* Agent reasoning, generative synthesis channel */
+  --agent-hover: #6D28D9;
+  --agent-light: #F5F3FF;
+  --agent-border: #DDD6FE;
+
+  /* Typography Scale */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'SF Mono', 'Fira Code', Menlo, Consolas, monospace;
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', Menlo, Consolas, monospace;
 
-  --t-display-size: 28px;
-  --t-display-line: 34px;
-  --t-display-weight: 600;
+  --t-hero-size: 32px;
+  --t-hero-line: 40px;
+  --t-hero-weight: 700;
+
+  --t-display-size: 24px;
+  --t-display-line: 32px;
+  --t-display-weight: 700;
 
   --t-heading-size: 18px;
   --t-heading-line: 26px;
   --t-heading-weight: 600;
+
+  --t-subhead-size: 15px;
+  --t-subhead-line: 22px;
+  --t-subhead-weight: 600;
 
   --t-body-size: 14px;
   --t-body-line: 22px;
@@ -40,9 +73,9 @@
 
   --t-mono-size: 13px;
   --t-mono-line: 20px;
-  --t-mono-weight: 450;
+  --t-mono-weight: 500;
 
-  /* Spacing */
+  /* Spacing Scale */
   --spacing-1: 4px;
   --spacing-2: 8px;
   --spacing-3: 12px;
@@ -50,55 +83,29 @@
   --spacing-5: 20px;
   --spacing-6: 24px;
   --spacing-8: 32px;
+  --spacing-10: 40px;
 
   /* Radii */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
+  --radius-xs: 3px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
   --radius-full: 9999px;
 
-  /* Shadows (modals & overlays only) */
-  --shadow-overlay: 0 20px 45px rgba(0, 0, 0, 0.25);
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.05);
+  /* Subtle, Layered Elevations (No heavy drop-shadow clutter) */
+  --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+  --shadow-card: 0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
+  --shadow-hover: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+  --shadow-overlay: 0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.05);
+
+  /* Micro-transitions */
+  --transition-fast: 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-normal: 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Numerals are tabular everywhere */
-body, table, input, select, textarea, button {
+/* Numerals are tabular everywhere across tables, metrics, and amounts */
+body, table, input, select, textarea, button, .t-mono, .stat-value {
   font-variant-numeric: tabular-nums;
-  font-family: var(--font-sans);
-}
-
-.t-display {
-  font-size: var(--t-display-size);
-  line-height: var(--t-display-line);
-  font-weight: var(--t-display-weight);
-  color: var(--ink-1);
-}
-
-.t-heading {
-  font-size: var(--t-heading-size);
-  line-height: var(--t-heading-line);
-  font-weight: var(--t-heading-weight);
-  color: var(--ink-1);
-}
-
-.t-body {
-  font-size: var(--t-body-size);
-  line-height: var(--t-body-line);
-  font-weight: var(--t-body-weight);
-  color: var(--ink-1);
-}
-
-.t-meta {
-  font-size: var(--t-meta-size);
-  line-height: var(--t-meta-line);
-  font-weight: var(--t-meta-weight);
-  color: var(--ink-3);
-}
-
-.t-mono {
-  font-family: var(--font-mono);
-  font-size: var(--t-mono-size);
-  line-height: var(--t-mono-line);
-  font-weight: var(--t-mono-weight);
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11', 'tnum';
 }

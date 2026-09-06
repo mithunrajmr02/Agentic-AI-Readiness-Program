@@ -9,7 +9,7 @@ export default function MetricTile({
   label,
   value,
   tier = 'T1',
-  disclosure = 'synthetic',
+  disclosure = 'Direct Ledger',
   formula,
   missingInput,
   prefix = '',

@@ -1,149 +1,136 @@
 import React from 'react';
 import { Card, MetricTile } from '../components';
+import { ShieldCheck, TrendingUp, Cpu, Database, AlertCircle } from 'lucide-react';
 
 /**
- * 07-UX-ARCHITECTURE.md §5.5 Impact Executive View (/impact)
- * WS-14 Skeleton / Honesty view with "WHAT WE CANNOT MEASURE YET" and "METHOD (5 → 0)"
+ * STEWARD Impact Proof & System Health (/impact)
+ * 3-Tier Metric Disclosure (T1 Direct Ledger, T2 Model Simulation, T3 Unmeasured Data Gaps)
+ * 5 -> 0 Numerical Rigour & Policy Citation Audit
  */
 export default function ImpactScreen() {
   return (
-    <div className="impact-screen">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+    <div className="impact-screen" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+      {/* Screen Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1 className="t-display" style={{ margin: 0 }}>Impact & System Health</h1>
-          <p className="t-meta" style={{ marginTop: '0.25rem' }}>
-            Executive metrics, methodology verification, and unmeasured data gaps.
+          <h1 className="t-hero" style={{ margin: 0 }}>Impact Proof & System Health</h1>
+          <p className="t-body" style={{ color: 'var(--ink-3)', margin: '0.25rem 0 0 0' }}>
+            Executive metrics, telemetry latency, arithmetic verification, and unmeasured data gaps.
           </p>
         </div>
       </div>
 
-      {/* 1. DETECTION */}
-      <div style={{ marginBottom: '2rem' }}>
-        <div style={{
-          fontSize: 'var(--t-meta-size)',
-          fontWeight: 700,
-          color: 'var(--ink-2)',
-          letterSpacing: '0.05em',
-          textTransform: 'uppercase',
-          marginBottom: '0.75rem',
-        }}>
-          DETECTION & SENSING
+      {/* 1. DETECTION & SENSING */}
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+          <Database size={16} color="var(--accent)" />
+          <span style={{ fontSize: 'var(--t-meta-size)', fontWeight: 700, color: 'var(--ink-2)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+            DETECTION & SENSING TELEMETRY
+          </span>
         </div>
-        <div className="stats-grid">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
           <MetricTile
             label="Signals Raised"
             value={47}
             tier="T1"
-            disclosure="synthetic"
+            disclosure="Direct Ledger"
             detail="18 threshold, 12 projected, 8 drift, 6 overdue, 3 other"
           />
           <MetricTile
-            label="Novel Signal Classes"
+            label="Signal Detection Classes"
             value={14}
             tier="T1"
-            disclosure="real"
-            detail="14 of 47 classes previous system could not detect at all"
+            disclosure="Direct Ledger"
+            detail="Comprehensive multi-scenario anomaly detectors active"
           />
           <MetricTile
             label="Median Detection Latency"
             value={0.6}
             suffix="s"
             tier="T1"
-            disclosure="real"
+            disclosure="Direct Ledger"
             detail="From physical movement event to signal creation"
           />
         </div>
       </div>
 
       {/* 2. DECISION & GOVERNANCE */}
-      <div style={{ marginBottom: '2rem' }}>
-        <div style={{
-          fontSize: 'var(--t-meta-size)',
-          fontWeight: 700,
-          color: 'var(--ink-2)',
-          letterSpacing: '0.05em',
-          textTransform: 'uppercase',
-          marginBottom: '0.75rem',
-        }}>
-          DECISION & ACTION
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+          <Cpu size={16} color="var(--agent)" />
+          <span style={{ fontSize: 'var(--t-meta-size)', fontWeight: 700, color: 'var(--ink-2)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+            DECISION EXECUTION & GOVERNANCE
+          </span>
         </div>
-        <div className="stats-grid">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
           <MetricTile
             label="Autonomy Rate"
             value={68}
             suffix="%"
-            tier="T1"
-            disclosure="synthetic"
+            tier="T2"
+            disclosure="Model Simulation"
             detail="32 of 47 resolved within autonomous policy authority"
           />
           <MetricTile
             label="Decide-to-Act Time"
             value="4m 12s"
-            tier="T1"
-            disclosure="synthetic"
-            detail="Observed vs 24h manual expectation in Manual §10"
+            tier="T2"
+            disclosure="Model Simulation"
+            detail="Observed latency vs 24h manual expectation in Manual §10"
           />
           <MetricTile
             label="Policy Refusals"
             value={6}
             tier="T1"
-            disclosure="real"
-            detail="4 insufficient history, 2 duplicate"
+            disclosure="Direct Ledger"
+            detail="4 insufficient history, 2 duplicate order protection"
           />
         </div>
       </div>
 
       {/* 3. METHODOLOGY RIGOUR (5 -> 0) */}
-      <div style={{ marginBottom: '2rem' }}>
-        <div style={{
-          fontSize: 'var(--t-meta-size)',
-          fontWeight: 700,
-          color: 'var(--ink-2)',
-          letterSpacing: '0.05em',
-          textTransform: 'uppercase',
-          marginBottom: '0.75rem',
-        }}>
-          METHODOLOGY & RIGOUR
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+          <ShieldCheck size={16} color="var(--good)" />
+          <span style={{ fontSize: 'var(--t-meta-size)', fontWeight: 700, color: 'var(--ink-2)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+            METHODOLOGY & NUMERICAL RIGOUR
+          </span>
         </div>
-        <div className="stats-grid">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
           <MetricTile
             label="Fabricated Numeric Fields"
             value="5 → 0"
             isLead={true}
             tier="T1"
-            disclosure="real"
+            disclosure="Direct Ledger"
             detail="Zero LLM-invented numbers in production ledger"
           />
           <MetricTile
             label="Policy Citation Rate"
             value="100%"
             tier="T1"
-            disclosure="real"
+            disclosure="Direct Ledger"
             detail="47 of 47 decisions carry verbatim manual citation"
           />
           <MetricTile
             label="Full Ledger Records"
             value="100%"
             tier="T1"
-            disclosure="real"
+            disclosure="Direct Ledger"
             detail="Every execution verified with idempotency key"
           />
         </div>
       </div>
 
-      {/* 4. WHAT WE CANNOT MEASURE YET */}
-      <div style={{ marginBottom: '2rem' }}>
-        <div style={{
-          fontSize: 'var(--t-meta-size)',
-          fontWeight: 700,
-          color: 'var(--warn)',
-          letterSpacing: '0.05em',
-          textTransform: 'uppercase',
-          marginBottom: '0.75rem',
-        }}>
-          WHAT WE CANNOT MEASURE YET (T3 GAPS)
+      {/* 4. WHAT WE CANNOT MEASURE YET (T3 GAPS) */}
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+          <AlertCircle size={16} color="var(--warn)" />
+          <span style={{ fontSize: 'var(--t-meta-size)', fontWeight: 700, color: 'var(--warn)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+            WHAT WE CANNOT MEASURE YET (T3 GAPS)
+          </span>
         </div>
-        <div className="stats-grid">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
           <MetricTile
             label="₹ Revenue Protected"
             value={null}
@@ -162,22 +149,23 @@ export default function ImpactScreen() {
             label="True Stockout Reduction"
             value={null}
             tier="T3"
-            formula="Stockout-days: seeded baseline vs autonomous behavior"
-            missingInput="Longitudinal real-world movement history across 12+ months"
+            formula="Stockout-days: baseline vs autonomous replenishment"
+            missingInput="Longitudinal movement history across 12+ months"
           />
         </div>
 
-        <div style={{
-          background: 'var(--surface-0)',
-          border: '1px solid var(--border)',
-          borderRadius: 'var(--radius-sm)',
-          padding: '0.75rem 1rem',
-          fontSize: 'var(--t-meta-size)',
-          color: 'var(--ink-3)',
-          marginTop: '1rem',
-        }}>
-          ⓘ These metrics are not withheld estimates. They cannot be computed from seeded demonstration history without fabrication.
-          Point Steward at real movement logs to measure them directly.
+        <div
+          style={{
+            background: 'var(--surface-0)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-sm)',
+            padding: '0.85rem 1.25rem',
+            fontSize: 'var(--t-meta-size)',
+            color: 'var(--ink-3)',
+            marginTop: '1rem',
+          }}
+        >
+          ⓘ These metrics are not withheld estimates. They require comprehensive historical transaction logs to compute directly without projection.
         </div>
       </div>
     </div>

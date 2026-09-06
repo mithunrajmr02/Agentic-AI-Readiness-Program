@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Plus, CheckCircle, RefreshCw } from 'lucide-react';
+import { Plus, CheckCircle, RefreshCw, Inbox, Search } from 'lucide-react';
 import { API_BASE, describeApiError } from '../lib/api';
 import { Table, Card } from '../components';
 
 /**
- * 07-UX-ARCHITECTURE.md §5.8 Receiving & POs (/receiving)
- * Decomposed PO creation and goods receipt from App.jsx
+ * STEWARD Receiving & Purchase Orders Screen (/receiving)
+ * Railway Process Track for warehouse receiving operations.
  */
 export default function ReceivingScreen() {
   const navigate = useNavigate();
@@ -16,10 +16,13 @@ export default function ReceivingScreen() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showPOModal, setShowPOModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [newPO, setNewPO] = useState({
-    supplier_id: '', order_date: new Date().toISOString().split('T')[0],
-    expected_delivery: '', items: [{ product_id: '', quantity_ordered: 50, unit_cost: 100 }]
+    supplier_id: '',
+    order_date: new Date().toISOString().split('T')[0],
+    expected_delivery: '',
+    items: [{ product_id: '', quantity_ordered: 50, unit_cost: 100 }],
   });
 
   const fetchData = async () => {
@@ -30,9 +33,9 @@ export default function ReceivingScreen() {
         axios.get(`${API_BASE}/suppliers`),
         axios.get(`${API_BASE}/products`),
       ]);
-      setOrders(poRes.data);
-      setSuppliers(suppRes.data);
-      setProducts(prodRes.data);
+      setOrders(poRes.data || []);
+      setSuppliers(suppRes.data || []);
+      setProducts(prodRes.data || []);
     } catch (err) {
       console.error('Error fetching orders:', err);
     } finally {
@@ -51,11 +54,11 @@ export default function ReceivingScreen() {
         supplier_id: parseInt(newPO.supplier_id),
         order_date: newPO.order_date,
         expected_delivery: newPO.expected_delivery || null,
-        items: newPO.items.map(item => ({
+        items: newPO.items.map((item) => ({
           product_id: parseInt(item.product_id),
           quantity_ordered: parseInt(item.quantity_ordered),
-          unit_cost: parseFloat(item.unit_cost)
-        }))
+          unit_cost: parseFloat(item.unit_cost),
+        })),
       });
       setShowPOModal(false);
       fetchData();
@@ -64,7 +67,7 @@ export default function ReceivingScreen() {
     }
   };
 
-  const handleReceivePO = async (orderId) => {
+  const handleQuickReceivePO = async (orderId) => {
     try {
       await axios.patch(`${API_BASE}/orders/${orderId}/receive`);
       fetchData();
@@ -73,101 +76,154 @@ export default function ReceivingScreen() {
     }
   };
 
+  const filteredOrders = orders.filter((o) => {
+    return (
+      !searchQuery ||
+      o.po_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      String(o.id).includes(searchQuery)
+    );
+  });
+
   const columns = [
     {
       key: 'po_number',
       label: 'PO NUMBER',
-      width: '140px',
-      render: (val) => <strong className="t-mono">{val}</strong>,
+      width: '150px',
+      render: (val) => <span className="t-mono" style={{ fontWeight: 700, color: 'var(--ink-1)' }}>{val}</span>,
     },
     {
       key: 'supplier_id',
       label: 'SUPPLIER',
       render: (val) => {
-        const supp = suppliers.find(s => s.id === val);
-        return supp ? `${supp.supplier_code} — ${supp.name}` : `Supplier #${val}`;
+        const supp = suppliers.find((s) => s.id === val);
+        return supp ? (
+          <div>
+            <div style={{ fontWeight: 600, color: 'var(--ink-1)' }}>{supp.name}</div>
+            <div style={{ fontSize: '11px', color: 'var(--ink-3)' }}>{supp.supplier_code}</div>
+          </div>
+        ) : (
+          `Supplier #${val}`
+        );
       },
     },
     {
       key: 'order_date',
       label: 'ORDER DATE',
       width: '120px',
-      render: (val) => val || '—',
+      render: (val) => <span className="t-mono" style={{ fontSize: '12px', color: 'var(--ink-2)' }}>{val || '—'}</span>,
     },
     {
       key: 'expected_delivery',
-      label: 'EXPECTED',
-      width: '120px',
-      render: (val) => val || '—',
+      label: 'EXPECTED ARRIVAL',
+      width: '140px',
+      render: (val, row) => {
+        const isOverdue = val && new Date(val) < new Date('2026-08-25') && row.status !== 'received';
+        return (
+          <div>
+            <span className="t-mono" style={{ fontSize: '12px', color: isOverdue ? 'var(--critical)' : 'var(--ink-2)', fontWeight: isOverdue ? 700 : 500 }}>
+              {val || '—'}
+            </span>
+            {isOverdue && (
+              <div style={{ fontSize: '10px', color: 'var(--critical)', fontWeight: 600 }}>Overdue</div>
+            )}
+          </div>
+        );
+      },
     },
     {
       key: 'total_amount',
-      label: 'TOTAL (₹)',
+      label: 'TOTAL VALUE',
       width: '130px',
       align: 'right',
-      render: (val) => `₹${val?.toLocaleString('en-IN')}`,
-    },
-    {
-      key: 'status',
-      label: 'STATUS',
-      width: '130px',
       render: (val) => (
-        <span className={`badge ${
-          val === 'received' ? 'badge-success' :
-          val === 'draft' ? 'badge-primary' : 'badge-warning'
-        }`}>
-          {val}
+        <span className="t-mono" style={{ fontWeight: 700, color: 'var(--ink-1)' }}>
+          ₹{val ? val.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : '0.00'}
         </span>
       ),
     },
     {
+      key: 'status',
+      label: 'STATUS',
+      width: '140px',
+      render: (val) => {
+        const isReceived = val === 'received';
+        const isDraft = val === 'draft';
+        return (
+          <span
+            className={`badge ${isReceived ? 'badge-success' : isDraft ? 'badge-neutral' : 'badge-warning'}`}
+            style={{ fontSize: '10px' }}
+          >
+            {val || 'submitted'}
+          </span>
+        );
+      },
+    },
+    {
       key: 'actions',
-      label: 'ACTIONS',
-      width: '190px',
+      label: '',
+      width: '200px',
       render: (_, row) => (
-        <div style={{ display: 'flex', gap: '0.4rem' }}>
+        <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'flex-end' }}>
           {row.status !== 'received' && (
             <button
-              className="btn btn-success"
-              style={{ padding: '0.25rem 0.6rem', fontSize: '11px' }}
+              type="button"
+              className="btn btn-outline btn-sm"
               onClick={(e) => {
                 e.stopPropagation();
-                handleReceivePO(row.id);
+                navigate(`/receiving/${row.po_number || row.id}`);
               }}
             >
-              <CheckCircle size={12} /> Receive Quick
+              Partial / Dock Entry →
             </button>
           )}
-          <button
-            className="btn btn-outline"
-            style={{ padding: '0.25rem 0.6rem', fontSize: '11px' }}
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/receiving/${row.po_number}`);
-            }}
-          >
-            Entry ↗
-          </button>
+          {row.status !== 'received' && (
+            <button
+              type="button"
+              className="btn btn-success btn-sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleQuickReceivePO(row.id);
+              }}
+              title="Full receipt"
+            >
+              Receive
+            </button>
+          )}
         </div>
       ),
     },
   ];
 
   return (
-    <div className="receiving-screen">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+    <div className="receiving-screen" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1 className="t-display" style={{ margin: 0 }}>Receiving & Purchase Orders</h1>
-          <p className="t-meta" style={{ marginTop: '0.25rem' }}>
-            Goods receipt, backdating, and purchase order processing.
+          <h1 className="t-hero" style={{ margin: 0 }}>Receiving & Purchase Orders</h1>
+          <p className="t-body" style={{ color: 'var(--ink-3)', margin: '0.25rem 0 0 0' }}>
+            Inbound replenishment orders, delivery timelines, and dock receipt intake.
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <button className="btn btn-outline" onClick={fetchData}>
-            <RefreshCw size={15} /> Refresh
+
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+          <div style={{ position: 'relative', width: '220px' }}>
+            <Search size={15} style={{ position: 'absolute', left: '10px', top: '10px', color: 'var(--ink-3)' }} />
+            <input
+              type="text"
+              placeholder="Search PO number…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="form-control"
+              style={{ paddingLeft: '32px', fontSize: 'var(--t-meta-size)' }}
+            />
+          </div>
+
+          <button type="button" className="btn btn-outline btn-sm" onClick={fetchData} title="Refresh orders">
+            <RefreshCw size={14} /> Refresh
           </button>
-          <button className="btn btn-primary" onClick={() => setShowPOModal(true)}>
-            <Plus size={15} /> Raise PO
+
+          <button type="button" className="btn btn-primary btn-sm" onClick={() => setShowPOModal(true)}>
+            <Plus size={15} /> Create PO
           </button>
         </div>
       </div>
@@ -175,93 +231,132 @@ export default function ReceivingScreen() {
       <Card>
         <Table
           columns={columns}
-          rows={orders}
+          rows={filteredOrders}
           loading={loading}
-          onRowClick={(row) => navigate(`/receiving/${row.po_number}`)}
+          onRowClick={(row) => navigate(`/receiving/${row.po_number || row.id}`)}
         />
       </Card>
 
-      {/* Raise PO Modal */}
+      {/* Create PO Modal */}
       {showPOModal && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <div className="modal-header">
-              <div className="modal-title">Raise Purchase Order</div>
-              <button className="close-btn" onClick={() => setShowPOModal(false)}>&times;</button>
+            <div className="card-header">
+              <span className="card-title">Raise Replenishment Purchase Order</span>
+              <button
+                type="button"
+                onClick={() => setShowPOModal(false)}
+                style={{ background: 'none', border: 'none', fontSize: '1.25rem', cursor: 'pointer', color: 'var(--ink-3)' }}
+              >
+                ✕
+              </button>
             </div>
-            <form onSubmit={handleCreatePO}>
+            <form onSubmit={handleCreatePO} style={{ padding: '1.5rem' }}>
               <div className="form-group">
-                <label>Select Supplier</label>
+                <label className="form-label">Vendor / Supplier</label>
                 <select
-                  className="form-control"
                   required
                   value={newPO.supplier_id}
-                  onChange={e => setNewPO({...newPO, supplier_id: e.target.value})}
-                >
-                  <option value="">-- Select Active Supplier --</option>
-                  {suppliers.map(s => (
-                    <option key={s.id} value={s.id}>{s.supplier_code} - {s.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Select Product to Order</label>
-                <select
+                  onChange={(e) => setNewPO({ ...newPO, supplier_id: e.target.value })}
                   className="form-control"
-                  required
-                  value={newPO.items[0].product_id}
-                  onChange={e => {
-                    const prod = products.find(p => p.id === parseInt(e.target.value));
-                    setNewPO({
-                      ...newPO,
-                      items: [{
-                        product_id: e.target.value,
-                        quantity_ordered: prod?.reorder_quantity || 50,
-                        unit_cost: prod?.cost_price || 100
-                      }]
-                    });
-                  }}
                 >
-                  <option value="">-- Select Product --</option>
-                  {products.map(p => (
-                    <option key={p.id} value={p.id}>{p.sku} - {p.name} (Cost: ₹{p.cost_price})</option>
+                  <option value="">Select supplier…</option>
+                  {suppliers.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name} ({s.supplier_code})
+                    </option>
                   ))}
                 </select>
               </div>
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div className="form-group">
-                  <label>Quantity Ordered</label>
+                  <label className="form-label">Order Date</label>
                   <input
-                    type="number"
-                    className="form-control"
+                    type="date"
                     required
-                    value={newPO.items[0].quantity_ordered}
-                    onChange={e => {
-                      const items = [...newPO.items];
-                      items[0].quantity_ordered = e.target.value;
-                      setNewPO({...newPO, items});
-                    }}
+                    value={newPO.order_date}
+                    onChange={(e) => setNewPO({ ...newPO, order_date: e.target.value })}
+                    className="form-control"
                   />
                 </div>
                 <div className="form-group">
-                  <label>Agreed Unit Cost (₹)</label>
+                  <label className="form-label">Expected Delivery Date</label>
+                  <input
+                    type="date"
+                    value={newPO.expected_delivery}
+                    onChange={(e) => setNewPO({ ...newPO, expected_delivery: e.target.value })}
+                    className="form-control"
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Product Item</label>
+                <select
+                  required
+                  value={newPO.items[0]?.product_id || ''}
+                  onChange={(e) => {
+                    const prodId = e.target.value;
+                    const foundProd = products.find((p) => String(p.id) === String(prodId));
+                    const updated = [...newPO.items];
+                    updated[0] = {
+                      ...updated[0],
+                      product_id: prodId,
+                      unit_cost: foundProd ? foundProd.cost_price : updated[0].unit_cost,
+                    };
+                    setNewPO({ ...newPO, items: updated });
+                  }}
+                  className="form-control"
+                >
+                  <option value="">Select product SKU…</option>
+                  {products.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.sku} — {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="form-group">
+                  <label className="form-label">Quantity</label>
+                  <input
+                    type="number"
+                    required
+                    value={newPO.items[0]?.quantity_ordered || 50}
+                    onChange={(e) => {
+                      const updated = [...newPO.items];
+                      updated[0] = { ...updated[0], quantity_ordered: e.target.value };
+                      setNewPO({ ...newPO, items: updated });
+                    }}
+                    className="form-control"
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Unit Cost (₹)</label>
                   <input
                     type="number"
                     step="0.01"
-                    className="form-control"
                     required
-                    value={newPO.items[0].unit_cost}
-                    onChange={e => {
-                      const items = [...newPO.items];
-                      items[0].unit_cost = e.target.value;
-                      setNewPO({...newPO, items});
+                    value={newPO.items[0]?.unit_cost || 100}
+                    onChange={(e) => {
+                      const updated = [...newPO.items];
+                      updated[0] = { ...updated[0], unit_cost: e.target.value };
+                      setNewPO({ ...newPO, items: updated });
                     }}
+                    className="form-control"
                   />
                 </div>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
-                <button type="button" className="btn btn-outline" onClick={() => setShowPOModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Create Purchase Order</button>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
+                <button type="button" className="btn btn-outline" onClick={() => setShowPOModal(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Submit Purchase Order
+                </button>
               </div>
             </form>
           </div>

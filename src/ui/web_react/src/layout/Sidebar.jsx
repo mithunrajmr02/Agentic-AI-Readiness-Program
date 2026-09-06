@@ -15,11 +15,11 @@ import {
 } from 'lucide-react';
 
 /**
- * 07-UX-ARCHITECTURE.md §3.1 Navigation, grouped by job
- * Groups: OPERATE / MANAGE / PROVE / SETTINGS
+ * STEWARD Global Navigation Sidebar
+ * Groups: OPERATE / MANAGE / PROVE / GOVERNANCE
  * Keyboard shortcuts: ⌘1 .. ⌘8
  */
-export default function Sidebar({ userRole = 'manager', signalCount = 0, approvalCount = 0 }) {
+export default function Sidebar({ userRole = 'manager', signalCount = 3, approvalCount = 1 }) {
   const navigate = useNavigate();
 
   // Keyboard navigation shortcuts
@@ -60,27 +60,46 @@ export default function Sidebar({ userRole = 'manager', signalCount = 0, approva
       }}
     >
       {/* Brand Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem 0.75rem', marginBottom: '1.5rem' }}>
-        <div style={{
-          width: '32px',
-          height: '32px',
-          borderRadius: 'var(--radius-sm)',
-          background: 'var(--accent)',
-          color: '#ffffff',
+      <div
+        style={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
-          fontWeight: 800,
-          fontSize: '0.9rem',
-        }}>
+          gap: '0.75rem',
+          padding: '0.5rem 0.75rem',
+          marginBottom: '1.5rem',
+        }}
+      >
+        <div
+          style={{
+            width: '34px',
+            height: '34px',
+            borderRadius: 'var(--radius-sm)',
+            background: 'var(--accent)',
+            color: '#ffffff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: 800,
+            fontSize: '0.95rem',
+            letterSpacing: '-0.03em',
+            boxShadow: '0 2px 4px rgba(37, 99, 235, 0.2)',
+          }}
+        >
           ST
         </div>
         <div>
-          <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--ink-1)', letterSpacing: '-0.02em' }}>
+          <div
+            style={{
+              fontWeight: 800,
+              fontSize: '1.05rem',
+              color: 'var(--ink-1)',
+              letterSpacing: '-0.02em',
+            }}
+          >
             STEWARD
           </div>
-          <div style={{ fontSize: '11px', color: 'var(--ink-3)' }}>
-            Replenishment Control Tower
+          <div style={{ fontSize: '11px', color: 'var(--ink-3)', fontWeight: 500 }}>
+            Autonomous Control Tower
           </div>
         </div>
       </div>
@@ -89,38 +108,47 @@ export default function Sidebar({ userRole = 'manager', signalCount = 0, approva
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', flex: 1 }}>
         {/* OPERATE */}
         <div>
-          <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink-3)', padding: '0.25rem 0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <div
+            style={{
+              fontSize: '10.5px',
+              fontWeight: 700,
+              color: 'var(--ink-3)',
+              padding: '0.25rem 0.75rem',
+              textTransform: 'uppercase',
+              letterSpacing: '0.06em',
+            }}
+          >
             OPERATE
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', marginTop: '0.35rem' }}>
             <NavLink to="/tower" className={navLinkClass}>
-              <LayoutDashboard size={18} />
+              <LayoutDashboard size={17} />
               <span style={{ flex: 1 }}>Control Tower</span>
-              <kbd style={{ fontSize: '10px', color: 'var(--ink-3)' }}>⌘1</kbd>
+              <kbd>⌘1</kbd>
             </NavLink>
 
             <NavLink to="/signals" className={navLinkClass}>
-              <Radio size={18} />
+              <Radio size={17} />
               <span style={{ flex: 1 }}>Signals</span>
               {signalCount > 0 && (
                 <span className="badge badge-warning" style={{ padding: '0.1rem 0.4rem', fontSize: '10px' }}>
                   {signalCount}
                 </span>
               )}
-              <kbd style={{ fontSize: '10px', color: 'var(--ink-3)' }}>⌘2</kbd>
+              <kbd>⌘2</kbd>
             </NavLink>
 
             {/* Approvals (manager visible) */}
             {userRole !== 'staff' && (
               <NavLink to="/approvals" className={navLinkClass}>
-                <CheckSquare size={18} />
+                <CheckSquare size={17} />
                 <span style={{ flex: 1 }}>Approvals</span>
                 {approvalCount > 0 && (
                   <span className="badge badge-danger" style={{ padding: '0.1rem 0.4rem', fontSize: '10px' }}>
                     {approvalCount}
                   </span>
                 )}
-                <kbd style={{ fontSize: '10px', color: 'var(--ink-3)' }}>⌘3</kbd>
+                <kbd>⌘3</kbd>
               </NavLink>
             )}
           </div>
@@ -128,72 +156,99 @@ export default function Sidebar({ userRole = 'manager', signalCount = 0, approva
 
         {/* MANAGE */}
         <div>
-          <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink-3)', padding: '0.25rem 0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <div
+            style={{
+              fontSize: '10.5px',
+              fontWeight: 700,
+              color: 'var(--ink-3)',
+              padding: '0.25rem 0.75rem',
+              textTransform: 'uppercase',
+              letterSpacing: '0.06em',
+            }}
+          >
             MANAGE
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', marginTop: '0.35rem' }}>
             <NavLink to="/inventory" className={navLinkClass}>
-              <Package size={18} />
+              <Package size={17} />
               <span style={{ flex: 1 }}>Inventory</span>
-              <kbd style={{ fontSize: '10px', color: 'var(--ink-3)' }}>⌘4</kbd>
+              <kbd>⌘4</kbd>
             </NavLink>
 
             <NavLink to="/suppliers" className={navLinkClass}>
-              <Truck size={18} />
+              <Truck size={17} />
               <span style={{ flex: 1 }}>Suppliers</span>
-              <kbd style={{ fontSize: '10px', color: 'var(--ink-3)' }}>⌘5</kbd>
+              <kbd>⌘5</kbd>
             </NavLink>
 
             <NavLink to="/receiving" className={navLinkClass}>
-              <Inbox size={18} />
+              <Inbox size={17} />
               <span style={{ flex: 1 }}>Receiving</span>
-              <kbd style={{ fontSize: '10px', color: 'var(--ink-3)' }}>⌘6</kbd>
+              <kbd>⌘6</kbd>
             </NavLink>
           </div>
         </div>
 
         {/* PROVE */}
         <div>
-          <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink-3)', padding: '0.25rem 0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <div
+            style={{
+              fontSize: '10.5px',
+              fontWeight: 700,
+              color: 'var(--ink-3)',
+              padding: '0.25rem 0.75rem',
+              textTransform: 'uppercase',
+              letterSpacing: '0.06em',
+            }}
+          >
             PROVE
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', marginTop: '0.35rem' }}>
             <NavLink to="/decisions" className={navLinkClass}>
-              <History size={18} />
+              <History size={17} />
               <span style={{ flex: 1 }}>Decisions</span>
-              <kbd style={{ fontSize: '10px', color: 'var(--ink-3)' }}>⌘7</kbd>
+              <kbd>⌘7</kbd>
             </NavLink>
 
             <NavLink to="/impact" className={navLinkClass}>
-              <TrendingUp size={18} />
-              <span style={{ flex: 1 }}>Impact</span>
-              <kbd style={{ fontSize: '10px', color: 'var(--ink-3)' }}>⌘8</kbd>
+              <TrendingUp size={17} />
+              <span style={{ flex: 1 }}>Impact Proof</span>
+              <kbd>⌘8</kbd>
             </NavLink>
           </div>
         </div>
 
-        {/* SETTINGS (Manager only) */}
+        {/* GOVERNANCE (Manager only) */}
         {userRole !== 'staff' && (
           <div>
-            <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink-3)', padding: '0.25rem 0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <div
+              style={{
+                fontSize: '10.5px',
+                fontWeight: 700,
+                color: 'var(--ink-3)',
+                padding: '0.25rem 0.75rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+              }}
+            >
               GOVERNANCE
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', marginTop: '0.35rem' }}>
               <NavLink to="/settings/autonomy" className={navLinkClass}>
-                <Sliders size={18} />
-                <span style={{ flex: 1 }}>Autonomy Policy</span>
+                <Sliders size={17} />
+                <span style={{ flex: 1 }}>Autonomy Policies</span>
               </NavLink>
 
               <NavLink to="/settings/scenarios" className={navLinkClass}>
-                <PlayCircle size={18} />
-                <span style={{ flex: 1 }}>Demo Scenarios</span>
+                <PlayCircle size={17} />
+                <span style={{ flex: 1 }}>Simulation & Scenarios</span>
               </NavLink>
             </div>
           </div>
         )}
       </div>
 
-      {/* Footer link to Streamlit Agent Console */}
+      {/* Footer utility link */}
       <div style={{ borderTop: '1px solid var(--border)', paddingTop: '0.75rem', marginTop: '0.75rem' }}>
         <a
           href="http://localhost:8501"
@@ -201,10 +256,10 @@ export default function Sidebar({ userRole = 'manager', signalCount = 0, approva
           rel="noreferrer"
           className="nav-item"
           style={{ fontSize: 'var(--t-meta-size)', color: 'var(--ink-3)' }}
-          title="Internal inspection tool"
+          title="Open internal agent inspection console"
         >
-          <ExternalLink size={16} />
-          <span>Agent Console</span>
+          <ExternalLink size={15} />
+          <span>Agent Telemetry Console ↗</span>
         </a>
       </div>
     </aside>

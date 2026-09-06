@@ -64,6 +64,7 @@ from datetime import date, timedelta
 import structlog
 
 from src.backend.database import Base, SessionLocal, engine
+from src.backend import models_registry  # noqa: F401 -- registers all tables on Base.metadata
 from src.backend.models import (
     Category,
     MovementType,

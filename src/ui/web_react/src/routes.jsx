@@ -4,23 +4,23 @@ import { Navigate } from 'react-router-dom';
 import ControlTowerScreen from './screens/ControlTowerScreen';
 import SignalsScreen from './screens/SignalsScreen';
 import SignalDetailScreen from './screens/SignalDetailScreen';
-import ApprovalsScreen from './screens/ApprovalsScreen';
-import ApprovalDetailScreen from './screens/ApprovalDetailScreen';
+import ApprovalsScreen from './screens/approvals/ApprovalsScreen';
+import ApprovalDetailScreen from './screens/approvals/ApprovalDetailScreen';
 import InventoryScreen from './screens/InventoryScreen';
 import ProductDetailScreen from './screens/ProductDetailScreen';
 import SuppliersScreen from './screens/SuppliersScreen';
 import SupplierScorecardScreen from './screens/SupplierScorecardScreen';
 import ReceivingScreen from './screens/ReceivingScreen';
 import ReceiptEntryScreen from './screens/ReceiptEntryScreen';
-import DecisionsScreen from './screens/DecisionsScreen';
-import DecisionDetailScreen from './screens/DecisionDetailScreen';
+import DecisionsScreen from './screens/decisions/DecisionsScreen';
+import DecisionDetailScreen from './screens/decisions/DecisionDetailScreen';
 import ImpactScreen from './screens/ImpactScreen';
 import AutonomySettingsScreen from './screens/AutonomySettingsScreen';
 import ScenariosSettingsScreen from './screens/ScenariosSettingsScreen';
 
 /**
- * 07-UX-ARCHITECTURE.md §3.2 & 15-SHARED-CONTRACTS.md §13 Routing table
- * Exact 17 addressable routes unblocking all Wave-2 UI workstreams.
+ * STEWARD Routing Table
+ * Exact 17 addressable routes unblocking all operational and governance surfaces.
  */
 export const routes = [
   {

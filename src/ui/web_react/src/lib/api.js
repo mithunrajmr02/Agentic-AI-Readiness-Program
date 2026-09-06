@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 export const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1';
-export const TOKEN_STORAGE_KEY = 'poc07.access_token';
+export const TOKEN_STORAGE_KEY = 'steward.access_token';
 
 // Create configured axios instance
 export const api = axios.create({
