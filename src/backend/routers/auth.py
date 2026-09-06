@@ -1,5 +1,6 @@
 import hashlib
 import os
+import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -16,7 +17,9 @@ from src.backend.schemas import UserCreate, UserResponse, Token
 
 logger = structlog.get_logger()
 
-SECRET_KEY = os.getenv("SECRET_KEY", "secret-key-poc-07-inventory-management-2026")
+# A deployment must provide SECRET_KEY. The generated fallback keeps local POC
+# startup convenient without publishing a reusable signing key in source.
+SECRET_KEY = os.getenv("SECRET_KEY") or secrets.token_urlsafe(48)
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
 

@@ -12,12 +12,16 @@
 
 ---
 
-## 📌 Overview
+## Overview
 
-**STEWARD** is an enterprise-grade retail inventory management and autonomous procurement control tower. It coordinates end-to-end supply chain operations—from demand forecasting and automated reordering to vendor scorecards, goods receiving, and human-in-the-loop financial governance.
+**STEWARD** is a production-minded retail inventory management and autonomous procurement control tower. It coordinates end-to-end supply chain operations, from demand forecasting and supplier intelligence to governed replenishment, goods receiving, and human-in-the-loop financial control.
+
+> **Inventory that runs itself, within the limits you set.**
+
+Steward combines a reliable inventory system of record with grounded AI, deterministic operational analytics, policy-aware autonomy, and a decision trail that makes every action explainable.
 
 The system unifies five operational layers into a single production architecture:
-1. **Full-Stack Invariant CRUD:** FastAPI REST services backed by SQLAlchemy ORM and an immutable double-entry stock movement ledger.
+1. **Full-Stack Invariant CRUD:** FastAPI REST services backed by SQLAlchemy ORM and an append-only stock movement ledger with invariant verification.
 2. **Domain Knowledge RAG:** Grounded semantic retrieval over standard operating procedures (SOPs) and manuals using ChromaDB.
 3. **Agentic Tool Integration:** Dynamic context management and Pydantic-validated function calling for procurement reasoning.
 4. **Standard Model Context Protocol (FastMCP):** Standardized tool reflection exposing inventory operations to LLM clients and chat interfaces.
@@ -25,7 +29,48 @@ The system unifies five operational layers into a single production architecture
 
 ---
 
-## 📸 Application Interface Gallery
+## Executive Showcase
+
+### What makes this implementation stand out
+
+Steward goes beyond a conventional CRUD application or standalone chatbot. It brings the operational loop together in one system:
+
+| Capability | Implemented experience | Evidence in the repository |
+|---|---|---|
+| **Sense** | Seven operational detectors identify threshold breaches, projected stockouts, overdue purchase orders, configuration drift, supplier drift, capital drag, and insufficient data. | `src/signals/detectors/`, `src/signals/engine.py` |
+| **Decide** | Deterministic demand, reorder, EOQ, lead-time, sufficiency, valuation, and supplier analytics support explainable decisions. | `src/analytics/`, `src/sourcing/`, `src/policy/` |
+| **Act** | Eight-node LangGraph orchestration moves from investigation through policy evaluation, execution, verification, and recording. | `src/agents/multi_agent/graph.py`, `src/agents/multi_agent/nodes/` |
+| **Govern** | Approval inbox, counter-proposals, role-based authorization, autonomy modes, policy limits, and kill-switch controls provide bounded autonomy. | `src/governance/`, `src/backend/routers/approvals.py`, `src/backend/routers/policies.py` |
+| **Prove** | Decisions, approvals, signals, run records, provenance, and impact metrics make outcomes auditable. | `src/backend/models_governance.py`, `src/backend/models_analytics.py`, `src/metrics/` |
+| **Simulate** | Reproducible 90-day history and named scenarios make the system demonstrable on demand. | `src/simulation/`, `src/backend/routers/simulation.py` |
+| **Assist** | Grounded RAG, LangChain tools, FastMCP tools, and Streamlit chat expose operational intelligence naturally. | `src/rag/`, `src/agents/`, `src/mcp_server/`, `src/ui/chat_streamlit/` |
+
+### The product story in one sentence
+
+**Steward detects what needs attention, investigates the operational context, applies the store's policy, executes what it is authorized to do, escalates what needs a human decision, and records the outcome.**
+
+### Built for an executive demonstration
+
+The experience is designed around the decisions an operations leader cares about:
+
+- What needs attention now?
+- Why did the system raise it?
+- What does the policy allow?
+- What will happen if we act?
+- Who approved or executed the action?
+- What measurable operational impact followed?
+
+Every answer is represented in the product through the Control Tower, Signals Inbox, Approval Workspace, Decision Ledger, Supplier Scorecards, Receiving Dock, Impact view, Autonomy settings, and deterministic Scenario Harness.
+
+### Evidence-led delivery
+
+- Five integrated capability phases: CRUD, RAG, tool reasoning, MCP/chat, and LangGraph orchestration.
+- Seven signal detectors and dedicated analytics modules for demand, reorder quantity, EOQ, lead time, sufficiency, valuation, and supplier drift.
+- Real React control-tower interface with 17 captured product views.
+- FastAPI, SQLite, ChromaDB, LangChain, LangGraph, FastMCP, OpenTelemetry, and LangSmith working through shared application boundaries.
+- Full local verification: **723 tests passed, 0 skipped, 0 failed** in the final evaluation run.
+
+## Application Interface Gallery
 
 The platform features a responsive React 18 single-page application built with Vite and custom CSS design tokens, coupled with an interactive Streamlit AI interface.
 
@@ -42,7 +87,7 @@ Enforces financial governance boundaries (e.g. monetary approval thresholds) wit
 ![Approvals Queue](screenshots/05_approvals_queue.png)
 ![Approval Detail](screenshots/06_approval_detail.png)
 
-### Real-Time Inventory & Double-Entry Stock Ledger (`/inventory`)
+### Real-Time Inventory & Stock Ledger (`/inventory`)
 Physical stock position tracking with continuous invariant verification: `quantity_on_hand == sum(stock_movements.quantity)`.
 ![Inventory Management](screenshots/07_inventory.png)
 
@@ -215,17 +260,17 @@ streamlit run src/ui/chat_streamlit/app.py
 Execute the complete automated test suite:
 
 ```bash
-pytest -v
+python -m pytest -v
 ```
 
 Execute individual test suites:
 ```bash
-pytest tests/phase1/ -v   # Full Stack CRUD & Invariant Ledger
-pytest tests/phase2/ -v   # RAG Semantic Retrieval & ChromaDB
-pytest tests/phase3/ -v   # Context Engineering & Tool Integration
-pytest tests/phase4/ -v   # FastMCP Protocol & Streamlit Chat
-pytest tests/phase5/ -v   # Multi-Agent LangGraph Workflows
-pytest tests/simulation/  # Operational Simulation Scenarios D1-D4
+python -m pytest tests/phase1/ -v   # Full Stack CRUD & Invariant Ledger
+python -m pytest tests/phase2/ -v   # RAG Semantic Retrieval & ChromaDB
+python -m pytest tests/phase3/ -v   # Context Engineering & Tool Integration
+python -m pytest tests/phase4/ -v   # FastMCP Protocol & Streamlit Chat
+python -m pytest tests/phase5/ -v   # Multi-Agent LangGraph Workflows
+python -m pytest tests/simulation/  # Operational Simulation Scenarios D1-D4
 ```
 
 ---
@@ -247,4 +292,5 @@ pytest tests/simulation/  # Operational Simulation Scenarios D1-D4
 
 - **Technical Architecture & Code Guide:** [`docs/ARCHITECTURE_AND_CODE_GUIDE.md`](docs/ARCHITECTURE_AND_CODE_GUIDE.md)
 - **Operational Run Guide:** [`docs/RUN_GUIDE.md`](docs/RUN_GUIDE.md)
+- **Implementation Dossier:** [`docs/implementation/README.md`](docs/implementation/README.md)
 - **Evaluation Reports:** [`Mithun_20696155.md`](Mithun_20696155.md) | [`Mithun_20696155.json`](Mithun_20696155.json)
